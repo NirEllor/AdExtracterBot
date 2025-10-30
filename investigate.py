@@ -124,3 +124,7 @@ def investigate(urls, driver, ads):
     for creative_id, url in urls.items():
         ad_url = investigate_page(driver, url)
         ads[creative_id] = ad_url
+
+
+if __name__ == '__main__':
+    pass

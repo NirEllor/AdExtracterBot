@@ -18,3 +18,5 @@ def extract(urls, creative_id_set):
             creative_id_set.add(creative_id.value)
             urls[creative_id] = match.group(1)
 
+if __name__ == '__main__':
+    pass

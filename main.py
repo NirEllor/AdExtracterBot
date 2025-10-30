@@ -24,3 +24,6 @@ def run():
     download_ads(ads)
 
 
+if __name__ == '__main__':
+    run()
+

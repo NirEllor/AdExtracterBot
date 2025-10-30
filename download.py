@@ -2,11 +2,6 @@ import os
 import requests
 
 def download_media(creative_id, url, base_dir=r"C:\עוזר מחקר\AdExtracterBot\ads"):
-    """
-    מקבל URL של מדיה (תמונה, וידאו וכו'),
-    מזהה את סוג הקובץ לפי Content-Type,
-    ושומר אותו בשם המבוסס על creative_id בתיקייה מתאימה (images/videos/other).
-    """
     os.makedirs(base_dir, exist_ok=True)
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -52,5 +47,7 @@ def download_ads(ads):
         download_media(creative_id, url)
 
 
+if __name__ == '__main__':
+    pass
 
 
