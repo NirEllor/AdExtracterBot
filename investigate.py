@@ -39,12 +39,13 @@ def login_if_needed(driver):
     driver.get(LOGIN_URL)
     time.sleep(2)
 
+    # === Try loading cookies first ===
     if os.path.exists(COOKIES_FILE):
         try:
             cookies = pickle.load(open(COOKIES_FILE, "rb"))
             for c in cookies:
-                if 'expiry' in c:
-                    c['expiry'] = int(c['expiry'])
+                if "expiry" in c:
+                    c["expiry"] = int(c["expiry"])
                 driver.add_cookie(c)
             driver.refresh()
             time.sleep(2)
@@ -54,28 +55,57 @@ def login_if_needed(driver):
             print("⚠️ בעיה בטעינת cookies:", e)
 
     print("🔐 מבצע התחברות ראשונה...")
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 25)
     try:
         signin_btn = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "signin")))
         signin_btn.click()
+        
+        # Wait for a visible username input (handles both layouts)
+        def find_visible_input(by, value):
+            elements = driver.find_elements(by, value)
+            for el in elements:
+                if el.is_displayed():
+                    return el
+            return None
 
-        username_input = wait.until(EC.element_to_be_clickable((By.ID, "signInFormUsername")))
-        password_input = wait.until(EC.element_to_be_clickable((By.ID, "signInFormPassword")))
+        # Ensure form is visible (some versions have animation delay)
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'form[name="cognitoSignInForm"]')))
+        time.sleep(1)
 
+        username_input = None
+        password_input = None
+        for _ in range(10):  # retry a few times for dynamic layouts
+            username_input = find_visible_input(By.ID, "signInFormUsername")
+            password_input = find_visible_input(By.ID, "signInFormPassword")
+            if username_input and password_input:
+                break
+            time.sleep(0.5)
+
+        if not username_input or not password_input:
+            raise RuntimeError("Couldn't locate visible username/password fields")
+
+        # Scroll into view and fill credentials
+        driver.execute_script("arguments[0].scrollIntoView(true);", username_input)
+        time.sleep(0.3)
         username_input.clear()
         username_input.send_keys(USERNAME)
         password_input.clear()
         password_input.send_keys(PASSWORD)
 
-        login_button = wait.until(EC.element_to_be_clickable((By.NAME, "signInSubmitButton")))
+        # Find and click visible submit button
+        login_button = find_visible_input(By.NAME, "signInSubmitButton")
+        if not login_button:
+            raise RuntimeError("Couldn't locate visible submit button")
+        driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
+        time.sleep(0.3)
         login_button.click()
 
-        # המתן לסיום login (שינוי בכתובת או אלמנט חדש)
+        # Wait for redirect after successful login
         wait.until(lambda d: "login" not in d.current_url.lower())
 
-        # שמירת cookies
+        # Save cookies for reuse
         pickle.dump(driver.get_cookies(), open(COOKIES_FILE, "wb"))
-        print("✅ התחברות בוצעה וה-cookies נשמרו.")
+        print("✅ התחברות בוצעה בהצלחה וה-cookies נשמרו.")
     except Exception as e:
         print("❌ שגיאה בהתחברות:", e)
 
@@ -108,6 +138,7 @@ def extract_single_media_source(driver):
 
 # === ביקור בעמוד ובדיקת המדיה ===
 def investigate_page(driver, url):
+    time.sleep(3)
     try:
         driver.get(url)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
