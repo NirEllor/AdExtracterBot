@@ -8,11 +8,15 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from dotenv import load_dotenv
+
 
 # === קונפיגורציה כללית ===
 CHROMEDRIVER_PATH = r"C:\chromedriver-win64\chromedriver.exe"
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
+
+load_dotenv()
 
 USERNAME = os.getenv("APP_USERNAME")
 PASSWORD = os.getenv("APP_PASSWORD")

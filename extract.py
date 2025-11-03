@@ -1,9 +1,7 @@
 from openpyxl import load_workbook
 import re
 
-def extract(urls, creative_id_set):
-    excel_path = "booking_com_2024_1696090.xlsx"
-    sheet_name = "Report"
+def extract(urls, creative_id_set, excel_path, sheet_name):
     wb = load_workbook(excel_path)
     ws = wb[sheet_name]
 
