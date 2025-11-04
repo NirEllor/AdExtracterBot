@@ -6,6 +6,8 @@ from selenium.common import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from dotenv import load_dotenv
+import pandas as pd
+
 
 
 
@@ -25,8 +27,8 @@ if not USERNAME or not PASSWORD:
 # === יצירת driver ===
 def create_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--start-maximized")
-    # chrome_options.add_argument("--headless=new")  # לבוט ללא חלון גרפי
+    # chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--headless=new")  # לבוט ללא חלון גרפי
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
@@ -35,7 +37,7 @@ def create_driver():
 # === התחברות אוטומטית עם cookies ===
 def login_if_needed(driver):
     driver.get(LOGIN_URL)
-    time.sleep(10)
+    time.sleep(2)
 
     # === Try loading cookies first ===
     if os.path.exists(COOKIES_FILE):
@@ -46,14 +48,14 @@ def login_if_needed(driver):
                     c["expiry"] = int(c["expiry"])
                 driver.add_cookie(c)
             driver.refresh()
-            time.sleep(10)
+            time.sleep(5)
             print("✅ Cookies loaded — כנראה כבר מחובר.")
             return
         except Exception as e:
             print("⚠️ בעיה בטעינת cookies:", e)
 
     print("🔐 מבצע התחברות ראשונה...")
-    wait = WebDriverWait(driver, 25)
+    wait = WebDriverWait(driver, 10)
     try:
         signin_btn = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "signin")))
         signin_btn.click()
@@ -68,7 +70,7 @@ def login_if_needed(driver):
 
         # Ensure form is visible (some versions have animation delay)
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'form[name="cognitoSignInForm"]')))
-        time.sleep(10)
+        time.sleep(5)
 
         username_input = None
         password_input = None
@@ -114,7 +116,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 def extract_single_media_source(driver):
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 50)
 
 
     # 🔹 קודם ננסה לחפש וידאו
@@ -131,9 +133,13 @@ def extract_single_media_source(driver):
 
     # 🔹 אם לא נמצא וידאו, ננסה תמונה
     try:
-        image_div = wait.until(EC.presence_of_element_located((By.ID, "img")))
-        source = image_div.find_element(By.TAG_NAME, "src")
-        src = source.get_attribute("src")
+        # המתן עד שתופיע תמונה עם vivix ב-src
+        image_element = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "img[src*='CreativeViewer.axd']"))
+        )
+
+        # שלוף את הכתובת של התמונה
+        src = image_element.get_attribute("src")
         if src:
             print(f"🖼️ נמצאה תמונה: {src}")
             return src
@@ -172,31 +178,59 @@ def save_ads_to_excel(ads, output_path=r"C:\עוזר מחקר\AdExtracterBot\ads
 
 # === ביקור בעמוד ובדיקת המדיה ===
 def investigate_page(driver, url):
-    time.sleep(10)
+    print(f"\n🌐 Navigating to page: {url}")
     try:
         driver.get(url)
+        print("⏳ Waiting for body to load...")
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        print(f"🔎 Visiting {url}")
+        print(f"🔎 Page loaded successfully for {url}")
 
+        print("📸 Attempting to extract media source...")
         media_src = extract_single_media_source(driver)
+
         if media_src:
-            print(f"✅ Success! URL = {media_src}")
+            print(f"✅ Media found! Source URL = {media_src}")
         else:
-            print("❌ No media found.")
+            print("❌ No media found on this page.")
+
         return media_src
 
     except Exception as e:
-        print(f"⚠️ שגיאה בכניסה ל-{url}: {e}")
+        print(f"⚠️ Error while investigating {url}: {e}")
         return None
 
-def investigate(urls, driver, ads):
-    for creative_id, url in urls.items():
+def investigate(urls, driver, ads, brand_name):
+    print("\n🚀 Starting investigation phase...")
+    print(f"🧾 Total creatives to investigate: {len(urls)}")
+    failed_creative_ids = set()
+
+    for index, (creative_id, url) in enumerate(urls.items(), start=1):
+        print(f"\n--------------------------------------------")
+        print(f"🔢 Processing creative #{index}: ID = {creative_id}")
+        print(f"🔗 Original URL: {url}")
+
         ad_url = investigate_page(driver, url)
         ads[creative_id] = ad_url
-        if len(ads) == 3:
-            break
-    save_ads_to_excel(ads)
 
+        if ad_url:
+            print(f"📥 Added media for creative ID {creative_id}")
+        else:
+            print(f"⚠️ No media found for creative ID {creative_id}")
+            failed_creative_ids.add(creative_id)
+
+        # הדפסה של התקדמות כוללת
+        print(f"📊 Progress: {index}/{len(urls)} creatives processed.")
+
+        # לצורך בדיקות – עצור אחרי שלושה פריטים
+        # if len(ads) == 3:
+        #     print("🧪 Debug mode: stopping after 3 creatives.")
+        #     break
+
+    df = pd.DataFrame(list(failed_creative_ids), columns=["Values"])
+    df.to_excel(f"{brand_name}_failed_to_download.xlsx", index=False)
+
+    print("\n🏁 Investigation complete.")
+    print(f"✅ Total creatives with media found: {sum(1 for v in ads.values() if v)} / {len(ads)}")
 
 if __name__ == '__main__':
     pass
