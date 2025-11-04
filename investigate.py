@@ -1,14 +1,12 @@
 import os
 import pickle
 import time
-from urllib.parse import urljoin
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.common import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+
 
 
 # === קונפיגורציה כללית ===
@@ -111,29 +109,65 @@ def login_if_needed(driver):
 
 
 # === חילוץ קישור המדיה מתוך source שנמצא תחת img/video ===
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 def extract_single_media_source(driver):
-    base_url = driver.current_url
+    wait = WebDriverWait(driver, 10)
 
-    # בדוק <img> → <source>
-    for img in driver.find_elements(By.TAG_NAME, "img"):
-        for s in img.find_elements(By.TAG_NAME, "source"):
-            src = s.get_attribute("src")
-            if src:
-                absolute = urljoin(base_url, src)
-                print(f"🖼️ נמצא source בתוך <img>: {absolute}")
-                return absolute
 
-    # בדוק <video> → <source>
-    for video in driver.find_elements(By.TAG_NAME, "video"):
-        for s in video.find_elements(By.TAG_NAME, "source"):
-            src = s.get_attribute("src")
-            if src:
-                absolute = urljoin(base_url, src)
-                print(f"🎥 נמצא source בתוך <video>: {absolute}")
-                return absolute
+    # 🔹 קודם ננסה לחפש וידאו
+    try:
+        video_div = wait.until(EC.presence_of_element_located((By.ID, "video")))
+        source = video_div.find_element(By.TAG_NAME, "source")
+        src = source.get_attribute("src")
+        if src:
+            print(f"🎥 נמצא וידאו: {src}")
+            return src
+    except TimeoutException or NoSuchElementException as e:
+        print("❌ לא נמצא וידאו, ממשיך לבדוק תמונה...")
+        print(e)
 
-    print("⚠️ לא נמצא אלמנט source עם src")
+    # 🔹 אם לא נמצא וידאו, ננסה תמונה
+    try:
+        image_div = wait.until(EC.presence_of_element_located((By.ID, "img")))
+        source = image_div.find_element(By.TAG_NAME, "src")
+        src = source.get_attribute("src")
+        if src:
+            print(f"🖼️ נמצאה תמונה: {src}")
+            return src
+
+    except TimeoutException or NoSuchElementException as e:
+        print("❌ לא נמצא תמונה, ממשיך לבדוק תמונה...")
+        print(e)
+
+    # 🔹 fallback – לא נמצא כלום
+    print("⚠️ לא נמצא אלמנט וידאו או תמונה עם src")
     return None
+
+from openpyxl import Workbook
+
+def save_ads_to_excel(ads, output_path=r"C:\עוזר מחקר\AdExtracterBot\ads\ads.xlsx"):
+    """
+    מקבל מילון שבו כל מפתח הוא מזהה (creative_id) וכל ערך הוא URL.
+    שומר לקובץ Excel: עמודה A = מפתח, עמודה B = ערך.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ads"
+
+    # כותרות לעמודות
+    ws.append(["Creative ID", "URL"])
+
+    # כתיבת הנתונים
+    for key, value in ads.items():
+        ws.append([key, value])
+
+    # שמירה לקובץ
+    wb.save(output_path)
+    print(f"✅ נשמר בהצלחה: {output_path}")
+
 
 
 # === ביקור בעמוד ובדיקת המדיה ===
@@ -159,6 +193,9 @@ def investigate(urls, driver, ads):
     for creative_id, url in urls.items():
         ad_url = investigate_page(driver, url)
         ads[creative_id] = ad_url
+        if len(ads) == 3:
+            break
+    save_ads_to_excel(ads)
 
 
 if __name__ == '__main__':
