@@ -35,7 +35,7 @@ def create_driver():
 # === התחברות אוטומטית עם cookies ===
 def login_if_needed(driver):
     driver.get(LOGIN_URL)
-    time.sleep(2)
+    time.sleep(10)
 
     # === Try loading cookies first ===
     if os.path.exists(COOKIES_FILE):
@@ -46,7 +46,7 @@ def login_if_needed(driver):
                     c["expiry"] = int(c["expiry"])
                 driver.add_cookie(c)
             driver.refresh()
-            time.sleep(2)
+            time.sleep(10)
             print("✅ Cookies loaded — כנראה כבר מחובר.")
             return
         except Exception as e:
@@ -68,7 +68,7 @@ def login_if_needed(driver):
 
         # Ensure form is visible (some versions have animation delay)
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'form[name="cognitoSignInForm"]')))
-        time.sleep(1)
+        time.sleep(10)
 
         username_input = None
         password_input = None
@@ -77,14 +77,14 @@ def login_if_needed(driver):
             password_input = find_visible_input(By.ID, "signInFormPassword")
             if username_input and password_input:
                 break
-            time.sleep(0.5)
+            time.sleep(1)
 
         if not username_input or not password_input:
             raise RuntimeError("Couldn't locate visible username/password fields")
 
         # Scroll into view and fill credentials
         driver.execute_script("arguments[0].scrollIntoView(true);", username_input)
-        time.sleep(0.3)
+        time.sleep(1)
         username_input.clear()
         username_input.send_keys(USERNAME)
         password_input.clear()
@@ -95,7 +95,7 @@ def login_if_needed(driver):
         if not login_button:
             raise RuntimeError("Couldn't locate visible submit button")
         driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
-        time.sleep(0.3)
+        time.sleep(1)
         login_button.click()
 
         # Wait for redirect after successful login
@@ -172,10 +172,10 @@ def save_ads_to_excel(ads, output_path=r"C:\עוזר מחקר\AdExtracterBot\ads
 
 # === ביקור בעמוד ובדיקת המדיה ===
 def investigate_page(driver, url):
-    time.sleep(3)
+    time.sleep(10)
     try:
         driver.get(url)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         print(f"🔎 Visiting {url}")
 
         media_src = extract_single_media_source(driver)
