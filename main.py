@@ -11,10 +11,12 @@ sheet_name = "Report"
 
 ROOT_IMPORT_PATH = "/vivvix_reports (לא מפורטים)"
 ROOT_EXPORT_PATH = "/Vivix data"
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
-dbx = dropbox.Dropbox(ACCESS_TOKEN)
-
+dbx = dropbox.Dropbox(
+    oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
+    app_key=os.getenv("DROPBOX_APP_KEY"),
+    app_secret=os.getenv("DROPBOX_APP_SECRET"),
+)
 
 def run(driver, subfolder_path, brand_name, file_name):
     print(f"\n🚀 Starting run() for: {subfolder_path}")
@@ -45,6 +47,8 @@ def run(driver, subfolder_path, brand_name, file_name):
 
 
 def main():
+    created_folders = set()
+
     print("🚀 Initializing Chrome driver...")
     driver = create_driver()
     print("🌐 Chrome driver created successfully!")
@@ -98,12 +102,13 @@ def main():
         print(f"📂 Target brand folder: {subfolder_path}")
 
         # יצירת תיקייה למותג אם אינה קיימת
-        try:
-            dbx.files_get_metadata(subfolder_path)
-            print(f"✅ Folder already exists: {subfolder_path}")
-        except ApiError:
-            dbx.files_create_folder_v2(subfolder_path)
-            print(f"📁 Created new folder: {subfolder_path}")
+        if subfolder_path not in created_folders:
+            try:
+                dbx.files_get_metadata(subfolder_path)
+                print(f"✅ Folder already exists: {subfolder_path}")
+            except ApiError:
+                dbx.files_create_folder_v2(subfolder_path)
+                print(f"📁 Created new folder: {subfolder_path}")
 
         # הרצת הפונקציה שלך על הקובץ המקומי
         print(f"🚀 Running 'run()' for brand '{brand_name}'...")
@@ -123,5 +128,4 @@ def main():
 
     print("\n🏁 All Excel files processed successfully!")
 if __name__ == '__main__':
-    # print("Access token is:", ACCESS_TOKEN)
     main()

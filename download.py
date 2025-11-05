@@ -1,46 +1,43 @@
 import os
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר\AdExtracterBot\ads"):
     """
     מוריד מדיה מה-URL ושומר אותה בנתיב:
-    base_dir / subfolder_path / <images|videos|other>
+    base_dir / brand_name / <images|videos|other>
     """
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
-        # --- שלב 1: בקשת GET עם stream ---
-        with requests.get(url, stream=True, timeout=30, headers=headers) as response:
+        with requests.get(url, stream=True, timeout=15, headers=headers) as response:
             response.raise_for_status()
-
-            # --- שלב 2: זיהוי סוג לפי header ---
             content_type = response.headers.get("Content-Type", "").lower()
+
             if "image" in content_type:
                 subdir = "images"
-                ext = "." + content_type.split("/")[-1].split(";")[0]  # לדוגמה .jpeg
+                ext = "." + content_type.split("/")[-1].split(";")[0]
             elif "video" in content_type:
                 subdir = "videos"
-                ext = "." + content_type.split("/")[-1].split(";")[0]  # לדוגמה .mp4
+                ext = "." + content_type.split("/")[-1].split(";")[0]
             else:
                 subdir = "other"
-                ext = ""
+                ext = ".bin"
 
-            # --- שלב 3: יצירת נתיב היעד המלא ---
-            # תיקיית בסיס -> שם מותג -> תת-תיקייה לפי סוג קובץ
+            # יצירת תיקיית יעד
             output_dir = os.path.join(base_dir, brand_name, subdir)
             os.makedirs(output_dir, exist_ok=True)
 
-            # --- שלב 4: שם הקובץ לפי creative_id בלבד ---
-            filename = f"{creative_id}{ext or '.bin'}"
+            filename = f"{creative_id}{ext}"
             output_path = os.path.join(output_dir, filename)
 
-            # --- שלב 5: כתיבה לקובץ ---
-            with open(output_path, "wb") as file:
+            with open(output_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
-                        file.write(chunk)
+                        f.write(chunk)
 
-        print(f"✅ נשמר בהצלחה: {output_path} ({content_type or 'unknown'})")
+        print(f"✅ נשמר בהצלחה: {output_path}")
         return output_path
 
     except Exception as e:
@@ -48,10 +45,38 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
         return None
 
 
-def download_ads(ads, subfolder_path):
-    for creative_id, url in ads.items():
-        download_media(creative_id, url, subfolder_path)
+def download_ads(ads, brand_name):
+    """
+    מוריד את כל המדיות במקביל לכל המודעות בסט הנתון.
+    """
+    total = len(ads)
+    print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
+
+    # Thread pool עם 10 חוטים (ניתן לשנות בהתאם לחוזק המחשב והאינטרנט)
+    with ThreadPoolExecutor(max_workers=32) as executor:
+        futures = {
+            executor.submit(download_media, creative_id, url, brand_name): creative_id
+            for creative_id, url in ads.items()
+        }
+
+        completed = 0
+        for future in as_completed(futures):
+            creative_id = futures[future]
+            try:
+                result = future.result()
+                completed += 1
+                print(f"📥 {completed}/{total} הורדות הושלמו ({creative_id})")
+            except Exception as e:
+                print(f"⚠️ שגיאה במדיה {creative_id}: {e}")
+
+    print(f"🏁 כל {total} ההורדות הושלמו עבור '{brand_name}'!")
 
 
 if __name__ == '__main__':
-    pass
+    # דוגמה לבדיקה
+    ads = {
+        "12345": "https://example.com/test1.jpg",
+        "12346": "https://example.com/test2.mp4",
+        "12347": "https://example.com/test3.png"
+    }
+    download_ads(ads, "TestBrand")

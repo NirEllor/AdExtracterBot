@@ -2,17 +2,20 @@ import os
 import pickle
 import time
 from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException
+from selenium.common import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from dotenv import load_dotenv
 import pandas as pd
-
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 # === קונפיגורציה כללית ===
-CHROMEDRIVER_PATH = r"C:\chromedriver-win64\chromedriver.exe"
+CHROMEDRIVER_PATH = r"C:\Users\Nir\PycharmProjects\AdExtracterBot\chromedriver.exe"
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
 
@@ -27,10 +30,8 @@ if not USERNAME or not PASSWORD:
 # === יצירת driver ===
 def create_driver():
     chrome_options = Options()
-    # chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("--headless=new")  # לבוט ללא חלון גרפי
-    service = Service(CHROMEDRIVER_PATH)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    chrome_options.add_argument("--headless=new")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
 
@@ -110,70 +111,91 @@ def login_if_needed(driver):
         print("❌ שגיאה בהתחברות:", e)
 
 
-# === חילוץ קישור המדיה מתוך source שנמצא תחת img/video ===
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-def extract_single_media_source(driver):
-    wait = WebDriverWait(driver, 50)
 
 
-    # 🔹 קודם ננסה לחפש וידאו
+def extract_single_media_source(driver, retries=3):
+    for attempt in range(1, retries + 1):
+        print(f"🔁 ניסיון {attempt} מתוך {retries}")
+        src = _extract_once(driver)
+        if src:
+            return src
+        time.sleep(5)
+    return None
+
+def _extract_once(driver):
+    return find_video_source(driver) or find_image_source(driver)
+
+
+
+# === תת-פונקציות ===
+
+def find_video_source(driver):
+    """מוצא כתובת וידאו אם קיימת."""
+    wait = WebDriverWait(driver, 20)
     try:
+        # קודם נחפש תגי video ישירות
+        videos = driver.find_elements(By.TAG_NAME, "video")
+        for v in videos:
+            try:
+                src = v.get_attribute("src") or v.find_element(By.TAG_NAME, "source").get_attribute("src")
+                if src and src.startswith("http"):
+                    print(f"🎥 נמצא וידאו: {src}")
+                    return src
+            except NoSuchElementException:
+                continue
+            except StaleElementReferenceException:
+                time.sleep(1)
+                videos = driver.find_element(By.TAG_NAME, "video")
+
+        # fallback – div עם id="video"
         video_div = wait.until(EC.presence_of_element_located((By.ID, "video")))
         source = video_div.find_element(By.TAG_NAME, "source")
         src = source.get_attribute("src")
         if src:
-            print(f"🎥 נמצא וידאו: {src}")
-            return src
-    except TimeoutException or NoSuchElementException as e:
-        print("❌ לא נמצא וידאו, ממשיך לבדוק תמונה...")
-        print(e)
-
-    # 🔹 אם לא נמצא וידאו, ננסה תמונה
-    try:
-        # המתן עד שתופיע תמונה עם vivix ב-src
-        image_element = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "img[src*='CreativeViewer.axd']"))
-        )
-
-        # שלוף את הכתובת של התמונה
-        src = image_element.get_attribute("src")
-        if src:
-            print(f"🖼️ נמצאה תמונה: {src}")
+            print(f"🎥 נמצא וידאו (div): {src}")
             return src
 
-    except TimeoutException or NoSuchElementException as e:
-        print("❌ לא נמצא תמונה, ממשיך לבדוק תמונה...")
-        print(e)
-
-    # 🔹 fallback – לא נמצא כלום
-    print("⚠️ לא נמצא אלמנט וידאו או תמונה עם src")
+    except TimeoutException:
+        print("⏱️ לא נמצא וידאו בזמן שהוקצב")
+    except Exception as e:
+        print(f"⚠️ שגיאה בזמן חיפוש וידאו: {e}")
     return None
 
-from openpyxl import Workbook
 
-def save_ads_to_excel(ads, output_path=r"C:\עוזר מחקר\AdExtracterBot\ads\ads.xlsx"):
-    """
-    מקבל מילון שבו כל מפתח הוא מזהה (creative_id) וכל ערך הוא URL.
-    שומר לקובץ Excel: עמודה A = מפתח, עמודה B = ערך.
-    """
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Ads"
+def find_image_source(driver, max_retries=5):
+    """מוצא כתובת תמונה מתוך רשימת סלקטורים אפשריים."""
+    wait = WebDriverWait(driver, 30)
+    image_selectors = [
+        "img[src*='CreativeViewer.axd']",
+    ]
 
-    # כותרות לעמודות
-    ws.append(["Creative ID", "URL"])
 
-    # כתיבת הנתונים
-    for key, value in ads.items():
-        ws.append([key, value])
+    for selector in image_selectors:
+        for attempt in range(1, max_retries + 1):
+            try:
+                img = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                src = img.get_attribute("src")
+                if src and src.startswith("http"):
+                    print(f"🖼️ נמצאה תמונה ({selector}) בניסיון {attempt}: {src}")
+                    return src
+                break  # אין צורך לנסות שוב אם נמצא האלמנט אך אין src תקין
 
-    # שמירה לקובץ
-    wb.save(output_path)
-    print(f"✅ נשמר בהצלחה: {output_path}")
+            except TimeoutException:
+                if attempt == max_retries:
+                    print(f"⏱️ לא נמצא אלמנט לפי {selector} אחרי {max_retries} ניסיונות.")
+                continue
 
+            except StaleElementReferenceException:
+                print(f"🔁 אלמנט התחלף (stale) — מנסה שוב ({attempt}/{max_retries}) עבור {selector}...")
+                time.sleep(1)
+                continue
+
+            except Exception as e:
+                print(f"⚠️ שגיאה בזמן חיפוש לפי {selector} (ניסיון {attempt}): {e}")
+                break
+
+    print("⚠️ לא נמצאה אף תמונה תואמת.")
+    return None
 
 
 # === ביקור בעמוד ובדיקת המדיה ===
@@ -199,38 +221,56 @@ def investigate_page(driver, url):
         print(f"⚠️ Error while investigating {url}: {e}")
         return None
 
-def investigate(urls, driver, ads, brand_name):
-    print("\n🚀 Starting investigation phase...")
+
+def investigate(urls, driver, ads, brand_name, max_workers=5):
+    """
+    גרסה יעילה של investigate – טוענת כמה עמודים במקביל באמצעות ThreadPoolExecutor.
+    לא עושה over-engineering, רק מקבילה מתונה.
+    """
+    print(f"\n🚀 Starting investigation phase for '{brand_name}'...")
     print(f"🧾 Total creatives to investigate: {len(urls)}")
+
     failed_creative_ids = set()
 
-    for index, (creative_id, url) in enumerate(urls.items(), start=1):
-        print(f"\n--------------------------------------------")
-        print(f"🔢 Processing creative #{index}: ID = {creative_id}")
-        print(f"🔗 Original URL: {url}")
-
+    # פונקציה פנימית – מריצה investigate_page על URL אחד
+    def process_creative(creative_id, url):
         ad_url = investigate_page(driver, url)
-        ads[creative_id] = ad_url
+        return creative_id, ad_url
 
-        if ad_url:
-            print(f"📥 Added media for creative ID {creative_id}")
-        else:
-            print(f"⚠️ No media found for creative ID {creative_id}")
-            failed_creative_ids.add(creative_id)
+    # שימוש ב־ThreadPoolExecutor למקביליות מתונה (4 ברירת מחדל)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(process_creative, cid, url): cid
+            for cid, url in urls.items()
+        }
 
-        # הדפסה של התקדמות כוללת
-        print(f"📊 Progress: {index}/{len(urls)} creatives processed.")
+        completed = 0
+        for future in as_completed(futures):
+            creative_id = futures[future]
+            try:
+                cid, ad_url = future.result()
+                ads[cid] = ad_url
+                completed += 1
 
-        # לצורך בדיקות – עצור אחרי שלושה פריטים
-        # if len(ads) == 3:
-        #     print("🧪 Debug mode: stopping after 3 creatives.")
-        #     break
+                if ad_url:
+                    print(f"✅ [{completed}/{len(urls)}] Found media for {cid}")
+                else:
+                    print(f"⚠️ [{completed}/{len(urls)}] No media for {cid}")
+                    failed_creative_ids.add(cid)
 
-    df = pd.DataFrame(list(failed_creative_ids), columns=["Values"])
-    df.to_excel(f"{brand_name}_failed_to_download.xlsx", index=False)
+            except Exception as e:
+                print(f"❌ Error in creative {creative_id}: {e}")
+                failed_creative_ids.add(creative_id)
 
-    print("\n🏁 Investigation complete.")
-    print(f"✅ Total creatives with media found: {sum(1 for v in ads.values() if v)} / {len(ads)}")
+    # שמירת רשימת כישלונות
+    if failed_creative_ids:
+        df = pd.DataFrame(list(failed_creative_ids), columns=["Values"])
+        df.to_excel(f"{brand_name}_failed_to_download.xlsx", index=False)
+        print(f"🧾 Saved {len(failed_creative_ids)} failed IDs to Excel.")
+
+    print(f"\n🏁 Investigation complete for '{brand_name}'.")
+    print(f"✅ Total creatives with media found: "
+          f"{sum(1 for v in ads.values() if v)} / {len(urls)}")
 
 if __name__ == '__main__':
     pass
