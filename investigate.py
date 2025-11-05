@@ -31,6 +31,7 @@ if not USERNAME or not PASSWORD:
 def create_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
+    # chrome_options.add_argument("--start-maximized")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
@@ -167,6 +168,8 @@ def find_image_source(driver, max_retries=5):
     wait = WebDriverWait(driver, 30)
     image_selectors = [
         "img[src*='CreativeViewer.axd']",
+        "img[src*='vivvix']",
+        "img[src*='CreativeByCollectionID']",
     ]
 
 
@@ -222,7 +225,7 @@ def investigate_page(driver, url):
         return None
 
 
-def investigate(urls, driver, ads, brand_name, max_workers=5):
+def investigate(urls, driver, ads, brand_name, max_workers=1):
     """
     גרסה יעילה של investigate – טוענת כמה עמודים במקביל באמצעות ThreadPoolExecutor.
     לא עושה over-engineering, רק מקבילה מתונה.

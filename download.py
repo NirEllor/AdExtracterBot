@@ -1,4 +1,6 @@
 import os
+import re
+
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -14,6 +16,17 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
         with requests.get(url, stream=True, timeout=15, headers=headers) as response:
             response.raise_for_status()
             content_type = response.headers.get("Content-Type", "").lower()
+
+            # ✅ תיקון קטן: אם זה HTML שמכיל <img src="..."> – נחלץ את ה-URL האמיתי
+            if "text/html" in content_type:
+                html = response.text
+                match = re.search(r'<img[^>]+src="([^"]+)"', html)
+                if match:
+                    real_url = match.group(1)
+                    print(f"🔗 HTML detected — fetching inner image: {real_url}")
+                    # קריאה חוזרת לקובץ המדיה עצמו
+                    return download_media(creative_id, real_url, brand_name, base_dir)
+
 
             if "image" in content_type:
                 subdir = "images"
@@ -53,7 +66,7 @@ def download_ads(ads, brand_name):
     print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
 
     # Thread pool עם 10 חוטים (ניתן לשנות בהתאם לחוזק המחשב והאינטרנט)
-    with ThreadPoolExecutor(max_workers=32) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         futures = {
             executor.submit(download_media, creative_id, url, brand_name): creative_id
             for creative_id, url in ads.items()

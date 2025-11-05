@@ -73,6 +73,9 @@ def main():
 
     for index, file_entry in enumerate(total_excels, start=1):
         print(f"\n====================================")
+        print(file_entry.name)
+        if file_entry.name == "arrow_electronics_2024_1696050.xlsx":
+            continue
         print(f"🔢 File {index}/{len(total_excels)}")
         print(f"📄 Processing Excel file: {file_entry.name}")
 
