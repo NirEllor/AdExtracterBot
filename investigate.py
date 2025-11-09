@@ -14,7 +14,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# === קונפיגורציה כללית ===
 CHROMEDRIVER_PATH = r"C:\Users\Nir\PycharmProjects\AdExtracterBot\chromedriver.exe"
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
@@ -27,7 +26,6 @@ if not USERNAME or not PASSWORD:
     raise RuntimeError("Missing credentials: set APP_USERNAME and APP_PASSWORD in env")
 
 
-# === יצירת driver ===
 def create_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
@@ -36,12 +34,10 @@ def create_driver():
     return driver
 
 
-# === התחברות אוטומטית עם cookies ===
 def login_if_needed(driver):
     driver.get(LOGIN_URL)
     time.sleep(2)
 
-    # === Try loading cookies first ===
     if os.path.exists(COOKIES_FILE):
         try:
             cookies = pickle.load(open(COOKIES_FILE, "rb"))
@@ -62,7 +58,6 @@ def login_if_needed(driver):
         signin_btn = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "signin")))
         signin_btn.click()
         
-        # Wait for a visible username input (handles both layouts)
         def find_visible_input(by, value):
             elements = driver.find_elements(by, value)
             for el in elements:
@@ -70,13 +65,12 @@ def login_if_needed(driver):
                     return el
             return None
 
-        # Ensure form is visible (some versions have animation delay)
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'form[name="cognitoSignInForm"]')))
         time.sleep(5)
 
         username_input = None
         password_input = None
-        for _ in range(10):  # retry a few times for dynamic layouts
+        for _ in range(10):
             username_input = find_visible_input(By.ID, "signInFormUsername")
             password_input = find_visible_input(By.ID, "signInFormPassword")
             if username_input and password_input:
@@ -86,7 +80,6 @@ def login_if_needed(driver):
         if not username_input or not password_input:
             raise RuntimeError("Couldn't locate visible username/password fields")
 
-        # Scroll into view and fill credentials
         driver.execute_script("arguments[0].scrollIntoView(true);", username_input)
         time.sleep(1)
         username_input.clear()
@@ -94,7 +87,6 @@ def login_if_needed(driver):
         password_input.clear()
         password_input.send_keys(PASSWORD)
 
-        # Find and click visible submit button
         login_button = find_visible_input(By.NAME, "signInSubmitButton")
         if not login_button:
             raise RuntimeError("Couldn't locate visible submit button")
@@ -102,10 +94,8 @@ def login_if_needed(driver):
         time.sleep(1)
         login_button.click()
 
-        # Wait for redirect after successful login
         wait.until(lambda d: "login" not in d.current_url.lower())
 
-        # Save cookies for reuse
         pickle.dump(driver.get_cookies(), open(COOKIES_FILE, "wb"))
         print("✅ התחברות בוצעה בהצלחה וה-cookies נשמרו.")
     except Exception as e:
@@ -114,7 +104,7 @@ def login_if_needed(driver):
 
 
 
-def extract_single_media_source(driver, retries=3):
+def extract_single_media_source(driver, retries=1):
     for attempt in range(1, retries + 1):
         print(f"🔁 ניסיון {attempt} מתוך {retries}")
         src = _extract_once(driver)
@@ -128,11 +118,9 @@ def _extract_once(driver):
 
 
 
-# === תת-פונקציות ===
 
 def find_video_source(driver):
-    """מוצא כתובת וידאו אם קיימת."""
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 10)
     try:
         # קודם נחפש תגי video ישירות
         videos = driver.find_elements(By.TAG_NAME, "video")
@@ -163,12 +151,11 @@ def find_video_source(driver):
     return None
 
 
-def find_image_source(driver, max_retries=5):
-    """מוצא כתובת תמונה מתוך רשימת סלקטורים אפשריים."""
-    wait = WebDriverWait(driver, 30)
+def find_image_source(driver, max_retries=2):
+    wait = WebDriverWait(driver, 10)
     image_selectors = [
-        "img[src*='CreativeViewer.axd']",
         "img[src*='vivvix']",
+        "img[src*='CreativeViewer.axd']",
         "img[src*='CreativeByCollectionID']",
     ]
 
@@ -181,7 +168,7 @@ def find_image_source(driver, max_retries=5):
                 if src and src.startswith("http"):
                     print(f"🖼️ נמצאה תמונה ({selector}) בניסיון {attempt}: {src}")
                     return src
-                break  # אין צורך לנסות שוב אם נמצא האלמנט אך אין src תקין
+                break
 
             except TimeoutException:
                 if attempt == max_retries:
@@ -201,7 +188,6 @@ def find_image_source(driver, max_retries=5):
     return None
 
 
-# === ביקור בעמוד ובדיקת המדיה ===
 def investigate_page(driver, url):
     print(f"\n🌐 Navigating to page: {url}")
     try:
@@ -226,21 +212,16 @@ def investigate_page(driver, url):
 
 
 def investigate(urls, driver, ads, brand_name, max_workers=1):
-    """
-    גרסה יעילה של investigate – טוענת כמה עמודים במקביל באמצעות ThreadPoolExecutor.
-    לא עושה over-engineering, רק מקבילה מתונה.
-    """
+
     print(f"\n🚀 Starting investigation phase for '{brand_name}'...")
     print(f"🧾 Total creatives to investigate: {len(urls)}")
 
     failed_creative_ids = set()
 
-    # פונקציה פנימית – מריצה investigate_page על URL אחד
-    def process_creative(creative_id, url):
-        ad_url = investigate_page(driver, url)
-        return creative_id, ad_url
+    def process_creative(c_id, url):
+        ad_creative_url = investigate_page(driver, url)
+        return c_id, ad_creative_url
 
-    # שימוש ב־ThreadPoolExecutor למקביליות מתונה (4 ברירת מחדל)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
             executor.submit(process_creative, cid, url): cid
@@ -265,7 +246,6 @@ def investigate(urls, driver, ads, brand_name, max_workers=1):
                 print(f"❌ Error in creative {creative_id}: {e}")
                 failed_creative_ids.add(creative_id)
 
-    # שמירת רשימת כישלונות
     if failed_creative_ids:
         df = pd.DataFrame(list(failed_creative_ids), columns=["Values"])
         df.to_excel(f"{brand_name}_failed_to_download.xlsx", index=False)

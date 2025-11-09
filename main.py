@@ -9,8 +9,9 @@ from dropbox.exceptions import ApiError
 
 sheet_name = "Report"
 
-ROOT_IMPORT_PATH = "/vivvix_reports (לא מפורטים)"
-ROOT_EXPORT_PATH = "/Vivix data"
+ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
+ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
+ONLY_ONE_FILE = "Buick_2024_Yearly_1711241.xlsx"
 
 dbx = dropbox.Dropbox(
     oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
@@ -74,7 +75,7 @@ def main():
     for index, file_entry in enumerate(total_excels, start=1):
         print(f"\n====================================")
         print(file_entry.name)
-        if file_entry.name == "arrow_electronics_2024_1696050.xlsx":
+        if file_entry.name != ONLY_ONE_FILE:
             continue
         print(f"🔢 File {index}/{len(total_excels)}")
         print(f"📄 Processing Excel file: {file_entry.name}")
