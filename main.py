@@ -7,11 +7,11 @@ import re
 from dropbox.exceptions import ApiError
 
 
-sheet_name = "Report"
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
 ONLY_ONE_FILE = "Buick_2024_Yearly_1711241.xlsx"
+SHEET_NAME = "Report"
 
 dbx = dropbox.Dropbox(
     oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
@@ -22,26 +22,21 @@ dbx = dropbox.Dropbox(
 def run(driver, subfolder_path, brand_name, file_name):
     print(f"\n🚀 Starting run() for: {subfolder_path}")
 
-    # יצירת דפדפן והתחברות
     print("🌐 Creating driver and logging in (if needed)...")
 
 
-    # שלב 1 – חילוץ URLs ו־IDs
     print(f"📊 Extracting data from Excel: {file_name}")
     urls, creative_id_set = {}, set()
-    extract(urls, creative_id_set, file_name, sheet_name)
+    extract(urls, creative_id_set, file_name, SHEET_NAME)
     print(f"🔍 Extracted {len(urls)} URLs, {len(creative_id_set)} creative IDs.")
 
-    # שלב 2 – חקירה
     ads = {}
     print("🧠 Investigating ads...")
     investigate(urls, driver, ads, brand_name)
     print(f"✅ Investigation complete. Found {len(ads)} ads.")
 
-    # סגירת דפדפן
     print("🧹 Browser closed.")
 
-    # שלב 3 – הורדה ל־Dropbox
     print(f"⬇️ Downloading media for {len(ads)} ads into: {subfolder_path}")
     download_ads(ads, brand_name)
     print(f"✅ Finished run() for: {subfolder_path}\n")
@@ -80,7 +75,6 @@ def main():
         print(f"🔢 File {index}/{len(total_excels)}")
         print(f"📄 Processing Excel file: {file_entry.name}")
 
-        # הורדת הקובץ ל־temp path מקומי
         temp_local_path = os.path.join(os.getcwd(), file_entry.name)
         print(f"⬇️ Downloading {file_entry.name} from Dropbox...")
 
@@ -93,7 +87,6 @@ def main():
             print(f"❌ Failed to download {file_entry.name}: {e}")
             continue
 
-        # חילוץ שם המותג
         match = re.match(r"^(.*?)_\d", file_entry.name)
         if match:
             brand_name = match.group(1)
@@ -101,11 +94,9 @@ def main():
             brand_name = file_entry.name.rsplit(".", 1)[0]
         print(f"🏷️  Brand name extracted: {brand_name}")
 
-        # קביעת נתיב תיקיית היעד ב-Dropbox
         subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
         print(f"📂 Target brand folder: {subfolder_path}")
 
-        # יצירת תיקייה למותג אם אינה קיימת
         if subfolder_path not in created_folders:
             try:
                 dbx.files_get_metadata(subfolder_path)
@@ -114,19 +105,16 @@ def main():
                 dbx.files_create_folder_v2(subfolder_path)
                 print(f"📁 Created new folder: {subfolder_path}")
 
-        # הרצת הפונקציה שלך על הקובץ המקומי
         print(f"🚀 Running 'run()' for brand '{brand_name}'...")
         run(driver, subfolder_path, brand_name, temp_local_path)
         print(f"✅ Finished processing brand '{brand_name}'.")
 
-        # מחיקת הקובץ המקומי אחרי העיבוד
         try:
             os.remove(temp_local_path)
             print(f"🗑️ Deleted temporary file: {temp_local_path}")
         except Exception as e:
             print(f"⚠️ Could not delete temp file: {e}")
 
-    # סגירת הדפדפן בסיום
     print("\n🧹 Closing browser...")
     driver.quit()
 

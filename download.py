@@ -6,10 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר\AdExtracterBot\ads"):
-    """
-    מוריד מדיה מה-URL ושומר אותה בנתיב:
-    base_dir / brand_name / <images|videos|other>
-    """
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
@@ -17,14 +13,12 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
             response.raise_for_status()
             content_type = response.headers.get("Content-Type", "").lower()
 
-            # ✅ תיקון קטן: אם זה HTML שמכיל <img src="..."> – נחלץ את ה-URL האמיתי
             if "text/html" in content_type:
                 html = response.text
                 match = re.search(r'<img[^>]+src="([^"]+)"', html)
                 if match:
                     real_url = match.group(1)
                     print(f"🔗 HTML detected — fetching inner image: {real_url}")
-                    # קריאה חוזרת לקובץ המדיה עצמו
                     return download_media(creative_id, real_url, brand_name, base_dir)
 
 
@@ -38,7 +32,6 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
                 subdir = "other"
                 ext = ".bin"
 
-            # יצירת תיקיית יעד
             output_dir = os.path.join(base_dir, brand_name, subdir)
             os.makedirs(output_dir, exist_ok=True)
 
@@ -59,9 +52,6 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
 
 
 def download_ads(ads, brand_name):
-    """
-    מוריד את כל המדיות במקביל לכל המודעות בסט הנתון.
-    """
     total = len(ads)
     print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
 
@@ -86,10 +76,4 @@ def download_ads(ads, brand_name):
 
 
 if __name__ == '__main__':
-    # דוגמה לבדיקה
-    ads = {
-        "12345": "https://example.com/test1.jpg",
-        "12346": "https://example.com/test2.mp4",
-        "12347": "https://example.com/test3.png"
-    }
-    download_ads(ads, "TestBrand")
+    pass
