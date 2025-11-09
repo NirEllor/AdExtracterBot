@@ -5,7 +5,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר\AdExtracterBot\ads"):
+def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files"):
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:

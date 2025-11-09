@@ -4,6 +4,7 @@ from investigate import create_driver, login_if_needed, investigate
 from download import download_ads
 import dropbox
 import re
+import time
 from dropbox.exceptions import ApiError
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
@@ -47,7 +48,7 @@ def run(driver, subfolder_path, brand_name, file_name):
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
 
-def main():
+def main(file="variable_for__failed_files"):
     created_folders = set()
 
     print("🚀 Initializing Chrome driver...")
@@ -75,9 +76,12 @@ def main():
     for index, file_entry in enumerate(total_excels, start=1):
         print(f"\n====================================")
         print(file_entry.name)
+        if file and file != file_entry.name:
+            continue
         if file_entry.name != ONLY_ONE_FILE:
             continue
         print(f"🔢 File {index}/{len(total_excels)}")
+        start_time = time.time()
         print(f"📄 Processing Excel file: {file_entry.name}")
 
         temp_local_path = os.path.join(os.getcwd(), file_entry.name)
@@ -112,7 +116,12 @@ def main():
 
         print(f"🚀 Running 'run()' for brand '{brand_name}'...")
         run(driver, subfolder_path, brand_name, temp_local_path)
+        end_time = time.time()
         print(f"✅ Finished processing brand '{brand_name}'.")
+        elapsed_seconds = end_time - start_time
+        elapsed_minutes = elapsed_seconds / 60
+
+        print(f"The operation took {elapsed_seconds:.2f} seconds ({elapsed_minutes:.2f} minutes)")
 
         try:
             os.remove(temp_local_path)
