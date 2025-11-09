@@ -10,7 +10,7 @@ from dropbox.exceptions import ApiError
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-ONLY_ONE_FILE = "Buick_2024_Yearly_1711241.xlsx"
+ONLY_ONE_FILE = "Lincoln_2024_yearly_1711273.xlsx"
 SHEET_NAME = "Report"
 
 dbx = dropbox.Dropbox(
