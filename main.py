@@ -48,7 +48,7 @@ def run(driver, subfolder_path, brand_name, file_name):
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
 
-def main(file="variable_for__failed_files"):
+def main(file=""):
     created_folders = set()
 
     print("🚀 Initializing Chrome driver...")
