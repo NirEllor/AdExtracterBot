@@ -51,7 +51,9 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\עוזר מחקר
         return None
 
 
-def download_ads(ads, brand_name):
+def download_ads(ads, brand_name, place_for_files):
+    if not place_for_files:
+        raise RuntimeError("place for files not filled")
     total = len(ads)
     print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
 

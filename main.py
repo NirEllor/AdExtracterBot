@@ -6,6 +6,11 @@ import dropbox
 import re
 from dropbox.exceptions import ApiError
 
+PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
+
+os.makedirs(PLACE_FOR_FILES, exist_ok=True)
+
+print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
@@ -38,7 +43,7 @@ def run(driver, subfolder_path, brand_name, file_name):
     print("🧹 Browser closed.")
 
     print(f"⬇️ Downloading media for {len(ads)} ads into: {subfolder_path}")
-    download_ads(ads, brand_name)
+    download_ads(ads, brand_name, PLACE_FOR_FILES)
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
 
