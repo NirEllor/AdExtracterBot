@@ -1,12 +1,14 @@
 import os
 import re
-
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files"):
     headers = {"User-Agent": "Mozilla/5.0"}
+
+
+
 
     try:
         with requests.get(url, stream=True, timeout=40, headers=headers) as response:
@@ -52,12 +54,12 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
 
 
 def download_ads(ads, brand_name, place_for_files):
+    failed_creative_ids = set()
     if not place_for_files:
         raise RuntimeError("place for files not filled")
     total = len(ads)
     print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
 
-    # Thread pool עם 10 חוטים (ניתן לשנות בהתאם לחוזק המחשב והאינטרנט)
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = {
             executor.submit(download_media, creative_id, url, brand_name): creative_id
@@ -68,13 +70,16 @@ def download_ads(ads, brand_name, place_for_files):
         for future in as_completed(futures):
             creative_id = futures[future]
             try:
-                result = future.result()
+                future.result()
                 completed += 1
                 print(f"📥 {completed}/{total} הורדות הושלמו ({creative_id})")
             except Exception as e:
+                failed_creative_ids.add(creative_id)
                 print(f"⚠️ שגיאה במדיה {creative_id}: {e}")
 
+
     print(f"🏁 כל {total} ההורדות הושלמו עבור '{brand_name}'!")
+    return failed_creative_ids
 
 
 if __name__ == '__main__':
