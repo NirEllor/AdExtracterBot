@@ -9,7 +9,7 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
-        with requests.get(url, stream=True, timeout=15, headers=headers) as response:
+        with requests.get(url, stream=True, timeout=40, headers=headers) as response:
             response.raise_for_status()
             content_type = response.headers.get("Content-Type", "").lower()
 
