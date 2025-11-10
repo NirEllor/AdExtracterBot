@@ -1,0 +1,6 @@
+pandas
+dropbox
+selenium
+dotenv
+webdriver_manager
+openpyxl
