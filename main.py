@@ -7,7 +7,7 @@ import re
 import time
 from dropbox.exceptions import ApiError
 
-PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
+PLACE_FOR_FILES = r"D:\Vivix_Media_Files"
 
 os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
@@ -16,7 +16,7 @@ print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-ONLY_ONE_FILE = "Cadillac_2024_Yearly_1711243.xlsx"
+ONLY_ONE_FILE = "GMC_2024_Yearly_1711244.xlsx"
 SHEET_NAME = "Report"
 
 dbx = dropbox.Dropbox(
