@@ -16,7 +16,7 @@ print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-ONLY_ONE_FILE = "GMC_2024_Yearly_1711244.xlsx"
+ONLY_ONE_FILE = "Nissan_2024_yearly_1711275.xlsx"
 SHEET_NAME = "Report"
 
 dbx = dropbox.Dropbox(
