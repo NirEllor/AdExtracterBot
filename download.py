@@ -60,7 +60,7 @@ def download_ads(ads, brand_name, place_for_files):
     total = len(ads)
     print(f"🚀 מתחיל להוריד {total} פריטים עבור '{brand_name}' במקביל...")
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=25) as executor:
         futures = {
             executor.submit(download_media, creative_id, url, brand_name): creative_id
             for creative_id, url in ads.items()
