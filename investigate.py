@@ -18,6 +18,7 @@ CHROMEDRIVER_PATH = r"C:\Users\Nir\PycharmProjects\AdExtracterBot\chromedriver.e
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
 TOO_MUCH_TIME = 6 * 60 * 60
+NUM_WORKERS = 1 # DO NOT CHANGE UNLESS NIR TOLD YOU
 
 load_dotenv()
 
@@ -218,7 +219,7 @@ def investigate_page(driver, url):
         return None
 
 
-def investigate(urls, driver, ads, brand_name, max_workers=1):
+def investigate(urls, driver, ads, brand_name, max_workers=NUM_WORKERS):
 
     print(f"\n🚀 Starting investigation phase for '{brand_name}'...")
     print(f"🧾 Total creatives to investigate: {len(urls)}")
