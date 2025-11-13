@@ -16,7 +16,7 @@ print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-ONLY_ONE_FILE = "Cadillac_2024_Yearly_1711243.xlsx"
+ONLY_ONE_FILE = "Buick_2024_Yearly_1711241.xlsx"
 SHEET_NAME = "Report"
 
 dbx = dropbox.Dropbox(
@@ -25,7 +25,7 @@ dbx = dropbox.Dropbox(
     app_secret=os.getenv("DROPBOX_APP_SECRET"),
 )
 
-def run(driver, subfolder_path, brand_name, file_name):
+def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
     print(f"\n🚀 Starting run() for: {subfolder_path}")
 
     print("🌐 Creating driver and logging in (if needed)...")
@@ -33,7 +33,7 @@ def run(driver, subfolder_path, brand_name, file_name):
 
     print(f"📊 Extracting data from Excel: {file_name}")
     urls, creative_id_set = {}, set()
-    extract(urls, creative_id_set, file_name, SHEET_NAME)
+    extract(urls, creative_id_set, file_name, SHEET_NAME, filtered_excel=True if filtered_excel else False)
     print(f"🔍 Extracted {len(urls)} URLs, {len(creative_id_set)} creative IDs.")
 
     ads = {}
@@ -48,7 +48,7 @@ def run(driver, subfolder_path, brand_name, file_name):
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
 
-def main(file=""):
+def main(filtered_excel=False):
     created_folders = set()
 
     print("🚀 Initializing Chrome driver...")
@@ -76,8 +76,6 @@ def main(file=""):
     for index, file_entry in enumerate(total_excels, start=1):
         print(f"\n====================================")
         print(file_entry.name)
-        if file and file != file_entry.name:
-            continue
         if file_entry.name != ONLY_ONE_FILE:
             continue
         print(f"🔢 File {index}/{len(total_excels)}")
@@ -115,7 +113,7 @@ def main(file=""):
                 print(f"📁 Created new folder: {subfolder_path}")
 
         print(f"🚀 Running 'run()' for brand '{brand_name}'...")
-        run(driver, subfolder_path, brand_name, temp_local_path)
+        run(driver, subfolder_path, brand_name, temp_local_path, filtered_excel=True if filtered_excel else False)
         end_time = time.time()
         print(f"✅ Finished processing brand '{brand_name}'.")
         elapsed_seconds = end_time - start_time
@@ -134,4 +132,4 @@ def main(file=""):
 
     print("\n🏁 All Excel files processed successfully!")
 if __name__ == '__main__':
-    main()
+    main(filtered_excel=True)
