@@ -45,11 +45,11 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
                     if chunk:
                         f.write(chunk)
 
-        print(f"✅ נשמר בהצלחה: {output_path}")
+        print(f"✅ Saved {output_path}")
         return output_path, ext
 
     except Exception as e:
-        print(f"❌ שגיאה בהורדת {url}: {e}")
+        print(f"❌ Error Downloading {url}: {e}")
         return None, None
 
 

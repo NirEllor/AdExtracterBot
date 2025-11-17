@@ -15,7 +15,6 @@ PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
 
 os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
-print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
@@ -160,7 +159,7 @@ def main(filtered_excel=False):
     subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
 
     # 2 - Run main processing (extract → investigate → download media)
-    all_files_downloaded = run(
+    all_files_arrived = run(
         driver,
         subfolder_path,
         brand_name,
@@ -184,7 +183,7 @@ def main(filtered_excel=False):
     driver.quit()
     print("\n🏁 Processing finished!")
 
-    return all_files_downloaded
+    return all_files_arrived
 
 def apply_post_attempt_filtering():
     """
@@ -251,7 +250,7 @@ if __name__ == '__main__':
             break
 
         if attempt == MAX_RUNS:
-            print("\n⚠️ Stopping: reached max attempts (5).")
+            print(f"\n⚠️ Stopping: reached max attempts ({MAX_RUNS}).")
             break
 
         attempt += 1
