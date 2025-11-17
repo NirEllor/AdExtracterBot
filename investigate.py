@@ -128,7 +128,7 @@ def _extract_once(driver):
 
 
 def find_video_source(driver):
-    wait = WebDriverWait(driver, 12)
+    wait = WebDriverWait(driver, 15)
     try:
         # קודם נחפש תגי video ישירות
         videos = driver.find_elements(By.TAG_NAME, "video")

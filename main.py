@@ -8,7 +8,6 @@ from download import download_ads
 import dropbox
 import re
 import time
-from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 
 
@@ -135,7 +134,6 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     return filtered_df
 
 def main(filtered_excel=False):
-    all_files_downloaded = False
     start_time = time.time()
 
     print("🚀 Initializing Chrome driver...")
@@ -147,100 +145,106 @@ def main(filtered_excel=False):
     print("✅ Login check complete.\n")
 
     print("🚀 Starting main() process...")
-    print(f"📁 Checking source folder: {ROOT_IMPORT_PATH}")
+    print(f"📄 Working on single source file: {REPORT_FILE}")
 
-    try:
-        files = dbx.files_list_folder(ROOT_IMPORT_PATH).entries
-        print(f"📂 Found {len(files)} items in '{ROOT_IMPORT_PATH}'.")
-    except ApiError as e:
-        print(f"❌ Error accessing import folder: {e}")
+    # 1 - Download the specific file only
+    temp_local_path, brand_name = download_excel_from_dropbox(
+        dbx, ROOT_IMPORT_PATH, REPORT_FILE
+    )
+
+    if not temp_local_path:
+        print("❌ Failed to download source file. Aborting.")
         driver.quit()
-        return
+        return False
 
-    total_excels = [f for f in files if f.name.endswith((".xlsx", ".xls"))]
-    print(f"🧾 Total Excel files to process: {len(total_excels)}\n")
+    subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
 
-    for index, file_entry in enumerate(total_excels, start=1):
-        if file_entry.name != REPORT_FILE:
-            continue
+    # 2 - Run main processing (extract → investigate → download media)
+    all_files_downloaded = run(
+        driver,
+        subfolder_path,
+        brand_name,
+        temp_local_path,
+        filtered_excel
+    )
 
-        print(f"\n🔢 File {index}/{len(total_excels)}")
-
-        # Download using your new function
-        temp_local_path, brand_name = download_excel_from_dropbox(
-            dbx, ROOT_IMPORT_PATH, file_entry.name
-        )
-
-        if not temp_local_path:
-            continue
-
-        subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
-
-        # run() now handles: extract → investigate → download media → filter excel
-        all_files_downloaded = run(
-            driver,
-            subfolder_path,
-            brand_name,
-            temp_local_path,
-            filtered_excel
-        )
-
-        # Delete local copy
-        try:
-            os.remove(temp_local_path)
-            print(f"🗑️ Deleted temporary file: {temp_local_path}")
-        except Exception as e:
-            print(e)
+    # 3 - Delete temp Excel
+    try:
+        os.remove(temp_local_path)
+        print(f"🗑️ Deleted temporary file: {temp_local_path}")
+    except Exception as e:
+        print(f"⚠️ Could not delete temp file: {e}")
 
     print("\n🧹 Closing browser...")
     end = time.time()
     elapsed_seconds = end - start_time
     elapsed_minutes = elapsed_seconds / 60
-    print(f"Time took: {elapsed_seconds:.2f} seconds ({elapsed_minutes:.2f} minutes)")
+    print(f"⏱ Time took: {elapsed_seconds:.2f} seconds ({elapsed_minutes:.2f} minutes)")
 
     driver.quit()
-    print("\n🏁 All Excel files processed successfully!")
+    print("\n🏁 Processing finished!")
 
     return all_files_downloaded
 
+def apply_post_attempt_filtering():
+    """
+    Applies the filtering logic AFTER attempt #1:
+    1. Download original REPORT_FILE from Dropbox
+    2. Filter it according to FAILED_FILE
+    3. Upload filtered version back to Dropbox
+    4. Delete temp file
+    """
+    print("📝 Filtering Excel based on previous failures...")
+
+    # 1 - Download source file from Dropbox
+    temp_local_path, _ = download_excel_from_dropbox(
+        dbx,
+        ROOT_IMPORT_PATH,
+        REPORT_FILE
+    )
+
+    if not temp_local_path:
+        print("❌ Could not download source report for filtering.")
+        return
+
+    # 2 - Apply filtering using FAILED_FILE
+    filter_failed_files(
+        excel_path=temp_local_path,
+        failed_ids_excel=FAILED_FILE,
+        column_name="MASTER CREATIVE ID"
+    )
+
+    # 3 - Upload filtered report back to Dropbox
+    with open(temp_local_path, "rb") as f:
+        dbx.files_upload(
+            f.read(),
+            f"{ROOT_IMPORT_PATH}/{REPORT_FILE}",
+            mode=WriteMode.overwrite
+        )
+
+    print(f"⬆️ Updated filtered report uploaded back to Dropbox.")
+
+    # 4 - Cleanup
+    try:
+        os.remove(temp_local_path)
+        print(f"🗑️ Deleted temporary file: {temp_local_path}")
+    except Exception as e:
+        print(f"⚠️ Could not remove temp file: {e}")
+
+
 if __name__ == '__main__':
     attempt = 1
-
     need_another_run = True
 
     while need_another_run and attempt <= MAX_RUNS:
         print(f"\n🚀 RUN #{attempt} STARTING...\n")
 
         if attempt > 1 and need_another_run:
-            print(f"📝 Filtering Excel (attempt #{attempt}) ...")
-
-            # 1 - Download original report again
-            temp_local_path, _ = download_excel_from_dropbox(
-                dbx, ROOT_IMPORT_PATH, REPORT_FILE
-            )
-
-            # 2 - Filter it locally
-            filter_failed_files(
-                excel_path=temp_local_path,
-                failed_ids_excel=FAILED_FILE,
-                column_name="MASTER CREATIVE ID"
-            )
-
-            # 3 - Upload updated version to Dropbox
-            with open(temp_local_path, "rb") as f:
-                dbx.files_upload(
-                    f.read(),
-                    f"{ROOT_IMPORT_PATH}/{REPORT_FILE}",
-                    mode=WriteMode.overwrite
-                )
-                print(f"⬆️ Updated filtered report uploaded back to Dropbox.")
-
-            # 4 - Remove local temp file
-            os.remove(temp_local_path)
+            apply_post_attempt_filtering()
 
         need_another_run = main(filtered_excel=True)
 
-        print(f"📊 Running {attempt} out of {MAX_RUNS} runs.\n")
+        print(f"📊 Running attempt {attempt} out of {MAX_RUNS}.\n")
 
         if not need_another_run:
             print("\n🎉 Finished! No failed creative IDs remain.")
@@ -253,5 +257,6 @@ if __name__ == '__main__':
         attempt += 1
 
     print("\n🏁 All done.")
+
 
 
