@@ -63,9 +63,49 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
 
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
+    return False if failed_files else True
+
+
+
+
+def download_excel_from_dropbox(dbx, root_import_path, file_name, temp_dir=None):
+    """
+    Downloads an Excel file from Dropbox to a temporary local directory.
+
+    Returns:
+        temp_local_path, brand_name
+    """
+    if temp_dir is None:
+        temp_dir = os.getcwd()
+
+    # Local path for temporary file
+    temp_local_path = os.path.join(temp_dir, file_name)
+    print(f"⬇️ Downloading {file_name} from Dropbox...")
+
+    try:
+        metadata, res = dbx.files_download(f"{root_import_path}/{file_name}")
+        with open(temp_local_path, "wb") as f:
+            f.write(res.content)
+        print(f"✅ Saved locally as: {temp_local_path}")
+    except Exception as e:
+        print(f"❌ Failed to download {file_name}: {e}")
+        return None, None
+
+    # Extract brand name from filename
+    match = re.match(r"^(.*?)_\d", file_name)
+    if match:
+        brand_name = match.group(1)
+    else:
+        brand_name = file_name.rsplit(".", 1)[0]
+
+    print(f"🏷️ Extracted brand name: {brand_name}")
+
+    return temp_local_path, brand_name
+
 
 def main(filtered_excel=False):
     created_folders = set()
+    need_another_run = False
 
     print("🚀 Initializing Chrome driver...")
     driver = create_driver()
@@ -91,7 +131,6 @@ def main(filtered_excel=False):
 
     for index, file_entry in enumerate(total_excels, start=1):
         print(f"\n====================================")
-        print(file_entry.name)
         if file_entry.name != ONLY_ONE_FILE:
             continue
         print(f"🔢 File {index}/{len(total_excels)}")
@@ -129,7 +168,7 @@ def main(filtered_excel=False):
                 print(f"📁 Created new folder: {subfolder_path}")
 
         print(f"🚀 Running 'run()' for brand '{brand_name}'...")
-        run(driver, subfolder_path, brand_name, temp_local_path, filtered_excel=True if filtered_excel else False)
+        need_another_run = run(driver, subfolder_path, brand_name, temp_local_path, filtered_excel=True if filtered_excel else False)
         end_time = time.time()
         print(f"✅ Finished processing brand '{brand_name}'.")
         elapsed_seconds = end_time - start_time
@@ -145,7 +184,19 @@ def main(filtered_excel=False):
 
     print("\n🧹 Closing browser...")
     driver.quit()
-
     print("\n🏁 All Excel files processed successfully!")
+
+    return need_another_run
+
+
+
+
+
+
 if __name__ == '__main__':
-    main(filtered_excel=True)
+    need_another_run = True
+
+    while need_another_run:
+        need_another_run = main(filtered_excel=True)
+
+
