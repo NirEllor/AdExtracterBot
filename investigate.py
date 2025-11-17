@@ -46,7 +46,7 @@ def login_if_needed(driver):
 
     if os.path.exists(COOKIES_FILE) and now - mtime > TOO_MUCH_TIME: # Old cookies
         os.remove(COOKIES_FILE)
-    elif os.path.exists(COOKIES_FILE): # Fresh cookies
+    if os.path.exists(COOKIES_FILE): # Fresh cookies
         try:
             cookies = pickle.load(open(COOKIES_FILE, "rb"))
             for c in cookies:
@@ -128,7 +128,7 @@ def _extract_once(driver):
 
 
 def find_video_source(driver):
-    wait = WebDriverWait(driver, 15)
+    wait = WebDriverWait(driver, 5)
     try:
         # קודם נחפש תגי video ישירות
         videos = driver.find_elements(By.TAG_NAME, "video")
@@ -160,7 +160,7 @@ def find_video_source(driver):
 
 
 def find_image_source(driver, max_retries=2):
-    wait = WebDriverWait(driver, 13)
+    wait = WebDriverWait(driver, 5)
     image_selectors = [
         "img[src*='vivvix']",
         "img[src*='CreativeViewer.axd']",
