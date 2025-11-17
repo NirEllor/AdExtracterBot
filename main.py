@@ -9,6 +9,8 @@ import dropbox
 import re
 import time
 from dropbox.exceptions import ApiError
+from dropbox.files import WriteMode
+
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
 
@@ -19,8 +21,10 @@ print(f"תיקייה נוצרה בהצלחה: {PLACE_FOR_FILES}")
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-ONLY_ONE_FILE = "Jeep_2024_yearly_1711272.xlsx"
+REPORT_FILE = "GMC_2024_Yearly_1711244.xlsx"
+FAILED_FILE = "GMC_failed_to_download.xlsx"
 SHEET_NAME = "Report"
+MAX_RUNS = 5
 
 dbx = dropbox.Dropbox(
     oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
@@ -68,7 +72,7 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
 
 
 
-def download_excel_from_dropbox(dbx, root_import_path, file_name, temp_dir=None):
+def download_excel_from_dropbox(dbx_instance, root_import_path, file_name, temp_dir=None):
     """
     Downloads an Excel file from Dropbox to a temporary local directory.
 
@@ -83,7 +87,7 @@ def download_excel_from_dropbox(dbx, root_import_path, file_name, temp_dir=None)
     print(f"⬇️ Downloading {file_name} from Dropbox...")
 
     try:
-        metadata, res = dbx.files_download(f"{root_import_path}/{file_name}")
+        metadata, res = dbx_instance.files_download(f"{root_import_path}/{file_name}")
         with open(temp_local_path, "wb") as f:
             f.write(res.content)
         print(f"✅ Saved locally as: {temp_local_path}")
@@ -103,9 +107,36 @@ def download_excel_from_dropbox(dbx, root_import_path, file_name, temp_dir=None)
     return temp_local_path, brand_name
 
 
+def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATIVE ID"):
+    """
+    Filters the main Excel file based on IDs taken from a separate failed_creative Excel file.
+
+    Args:
+        excel_path (str): Path to the main Excel file to filter.
+        failed_ids_excel (str): Path to the Excel file containing 'MASTER CREATIVE ID' column.
+        column_name (str): Column name to filter by.
+    """
+
+    # Load failed creative IDs file
+    df_failed = pd.read_excel(failed_ids_excel)
+    failed_ids = set(df_failed[column_name].astype(str))
+
+    # Load the main Excel
+    df = pd.read_excel(excel_path)
+    df[column_name] = df[column_name].astype(str)
+
+    # Filter
+    filtered_df = df[df[column_name].isin(failed_ids)]
+
+    # Save back to the same file
+    filtered_df.to_excel(excel_path, index=False)
+
+    print(f"📝 Excel '{excel_path}' filtered based on '{failed_ids_excel}'")
+    return filtered_df
+
 def main(filtered_excel=False):
-    created_folders = set()
-    need_another_run = False
+    all_files_downloaded = False
+    start_time = time.time()
 
     print("🚀 Initializing Chrome driver...")
     driver = create_driver()
@@ -130,73 +161,97 @@ def main(filtered_excel=False):
     print(f"🧾 Total Excel files to process: {len(total_excels)}\n")
 
     for index, file_entry in enumerate(total_excels, start=1):
-        print(f"\n====================================")
-        if file_entry.name != ONLY_ONE_FILE:
-            continue
-        print(f"🔢 File {index}/{len(total_excels)}")
-        start_time = time.time()
-        print(f"📄 Processing Excel file: {file_entry.name}")
-
-        temp_local_path = os.path.join(os.getcwd(), file_entry.name)
-        print(f"⬇️ Downloading {file_entry.name} from Dropbox...")
-
-        try:
-            metadata, res = dbx.files_download(f"{ROOT_IMPORT_PATH}/{file_entry.name}")
-            with open(temp_local_path, "wb") as f:
-                f.write(res.content)
-            print(f"✅ Saved locally as: {temp_local_path}")
-        except Exception as e:
-            print(f"❌ Failed to download {file_entry.name}: {e}")
+        if file_entry.name != REPORT_FILE:
             continue
 
-        match = re.match(r"^(.*?)_\d", file_entry.name)
-        if match:
-            brand_name = match.group(1)
-        else:
-            brand_name = file_entry.name.rsplit(".", 1)[0]
-        print(f"🏷️  Brand name extracted: {brand_name}")
+        print(f"\n🔢 File {index}/{len(total_excels)}")
+
+        # Download using your new function
+        temp_local_path, brand_name = download_excel_from_dropbox(
+            dbx, ROOT_IMPORT_PATH, file_entry.name
+        )
+
+        if not temp_local_path:
+            continue
 
         subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
-        print(f"📂 Target brand folder: {subfolder_path}")
 
-        if subfolder_path not in created_folders:
-            try:
-                dbx.files_get_metadata(subfolder_path)
-                print(f"✅ Folder already exists: {subfolder_path}")
-            except ApiError:
-                dbx.files_create_folder_v2(subfolder_path)
-                print(f"📁 Created new folder: {subfolder_path}")
+        # run() now handles: extract → investigate → download media → filter excel
+        all_files_downloaded = run(
+            driver,
+            subfolder_path,
+            brand_name,
+            temp_local_path,
+            filtered_excel
+        )
 
-        print(f"🚀 Running 'run()' for brand '{brand_name}'...")
-        need_another_run = run(driver, subfolder_path, brand_name, temp_local_path, filtered_excel=True if filtered_excel else False)
-        end_time = time.time()
-        print(f"✅ Finished processing brand '{brand_name}'.")
-        elapsed_seconds = end_time - start_time
-        elapsed_minutes = elapsed_seconds / 60
-
-        print(f"The operation took {elapsed_seconds:.2f} seconds ({elapsed_minutes:.2f} minutes)")
-
+        # Delete local copy
         try:
             os.remove(temp_local_path)
             print(f"🗑️ Deleted temporary file: {temp_local_path}")
         except Exception as e:
-            print(f"⚠️ Could not delete temp file: {e}")
+            print(e)
 
     print("\n🧹 Closing browser...")
+    end = time.time()
+    elapsed_seconds = end - start_time
+    elapsed_minutes = elapsed_seconds / 60
+    print(f"Time took: {elapsed_seconds:.2f} seconds ({elapsed_minutes:.2f} minutes)")
+
     driver.quit()
     print("\n🏁 All Excel files processed successfully!")
 
-    return need_another_run
-
-
-
-
-
+    return all_files_downloaded
 
 if __name__ == '__main__':
+    attempt = 1
+
     need_another_run = True
 
-    while need_another_run:
+    while need_another_run and attempt <= MAX_RUNS:
+        print(f"\n🚀 RUN #{attempt} STARTING...\n")
+
+        if attempt > 1 and need_another_run:
+            print(f"📝 Filtering Excel (attempt #{attempt}) ...")
+
+            # 1 - Download original report again
+            temp_local_path, _ = download_excel_from_dropbox(
+                dbx, ROOT_IMPORT_PATH, REPORT_FILE
+            )
+
+            # 2 - Filter it locally
+            filter_failed_files(
+                excel_path=temp_local_path,
+                failed_ids_excel=FAILED_FILE,
+                column_name="MASTER CREATIVE ID"
+            )
+
+            # 3 - Upload updated version to Dropbox
+            with open(temp_local_path, "rb") as f:
+                dbx.files_upload(
+                    f.read(),
+                    f"{ROOT_IMPORT_PATH}/{REPORT_FILE}",
+                    mode=WriteMode.overwrite
+                )
+                print(f"⬆️ Updated filtered report uploaded back to Dropbox.")
+
+            # 4 - Remove local temp file
+            os.remove(temp_local_path)
+
         need_another_run = main(filtered_excel=True)
+
+        print(f"📊 Running {attempt} out of {MAX_RUNS} runs.\n")
+
+        if not need_another_run:
+            print("\n🎉 Finished! No failed creative IDs remain.")
+            break
+
+        if attempt == MAX_RUNS:
+            print("\n⚠️ Stopping: reached max attempts (5).")
+            break
+
+        attempt += 1
+
+    print("\n🏁 All done.")
 
 
