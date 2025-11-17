@@ -128,7 +128,7 @@ def _extract_once(driver):
 
 
 def find_video_source(driver):
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 12)
     try:
         # קודם נחפש תגי video ישירות
         videos = driver.find_elements(By.TAG_NAME, "video")
@@ -160,7 +160,7 @@ def find_video_source(driver):
 
 
 def find_image_source(driver, max_retries=2):
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 13)
     image_selectors = [
         "img[src*='vivvix']",
         "img[src*='CreativeViewer.axd']",
