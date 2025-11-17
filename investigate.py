@@ -255,7 +255,7 @@ def investigate(urls, driver, ads, brand_name, max_workers=NUM_WORKERS):
                 failed_creative_ids.add(creative_id)
 
     if failed_creative_ids:
-        df = pd.DataFrame(list(failed_creative_ids), columns=["Values"])
+        df = pd.DataFrame(list(failed_creative_ids), columns=["MASTER CREATIVE ID"])
         df.to_excel(f"{brand_name}_failed_to_download.xlsx", index=False)
         print(f"🧾 Saved {len(failed_creative_ids)} failed IDs to Excel.")
 

@@ -1,4 +1,7 @@
 import os
+
+import pandas as pd
+
 from extract import extract
 from investigate import create_driver, login_if_needed, investigate
 from download import download_ads
@@ -44,7 +47,20 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
     print("🧹 Browser closed.")
 
     print(f"⬇️ Downloading media for {len(ads)} ads into: {subfolder_path}")
-    download_ads(ads, brand_name, PLACE_FOR_FILES)
+    failed_files = download_ads(ads, brand_name, PLACE_FOR_FILES)
+    df_new = pd.DataFrame(list(failed_files), columns=["MASTER CREATIVE ID"])
+    file_path = f"{brand_name}_failed_to_download.xlsx"
+
+    try:
+        df_old = pd.read_excel(file_path)
+    except FileNotFoundError:
+        df_old = pd.DataFrame(columns=["Values"])
+
+
+    df_combined = pd.concat([df_old, df_new], ignore_index=True)
+
+    df_combined.to_excel(file_path, index=False)
+
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
 

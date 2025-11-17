@@ -46,11 +46,11 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
                         f.write(chunk)
 
         print(f"✅ נשמר בהצלחה: {output_path}")
-        return output_path
+        return output_path, ext
 
     except Exception as e:
         print(f"❌ שגיאה בהורדת {url}: {e}")
-        return None
+        return None, None
 
 
 def download_ads(ads, brand_name, place_for_files):
@@ -70,11 +70,12 @@ def download_ads(ads, brand_name, place_for_files):
         for future in as_completed(futures):
             creative_id = futures[future]
             try:
-                future.result()
+                result_path, ext = future.result()
+                if ext == ".bin": # File gone wrong
+                    failed_creative_ids.add(creative_id)
                 completed += 1
                 print(f"📥 {completed}/{total} הורדות הושלמו ({creative_id})")
             except Exception as e:
-                failed_creative_ids.add(creative_id)
                 print(f"⚠️ שגיאה במדיה {creative_id}: {e}")
 
 
