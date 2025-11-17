@@ -66,7 +66,7 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
 
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
-    return False if failed_files else True
+    return True if not failed_files else False
 
 
 
@@ -234,19 +234,19 @@ def apply_post_attempt_filtering():
 
 if __name__ == '__main__':
     attempt = 1
-    need_another_run = True
+    all_files_downloaded = False
 
-    while need_another_run and attempt <= MAX_RUNS:
+    while all_files_downloaded and attempt <= MAX_RUNS:
         print(f"\n🚀 RUN #{attempt} STARTING...\n")
 
-        if attempt > 1 and need_another_run:
+        if attempt > 1 and not all_files_downloaded:
             apply_post_attempt_filtering()
 
-        need_another_run = main(filtered_excel=True)
+        all_files_downloaded = main(filtered_excel=True)
 
         print(f"📊 Running attempt {attempt} out of {MAX_RUNS}.\n")
 
-        if not need_another_run:
+        if not all_files_downloaded:
             print("\n🎉 Finished! No failed creative IDs remain.")
             break
 

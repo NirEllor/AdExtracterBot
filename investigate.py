@@ -165,6 +165,8 @@ def find_image_source(driver, max_retries=2):
         "img[src*='vivvix']",
         "img[src*='CreativeViewer.axd']",
         "img[src*='CreativeByCollectionID']",
+        "img[src*='evaliant.net']",
+
     ]
 
 
