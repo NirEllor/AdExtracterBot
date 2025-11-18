@@ -10,7 +10,7 @@ import openpyxl
 import re
 
 
-PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
+PLACE_FOR_FILES = r"D:\Vivix_Media_Files"
 
 os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
@@ -18,8 +18,8 @@ os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-REPORT_FILE = "GMC_2024_Yearly_1711244.xlsx"
-FAILED_FILE = "GMC_failed_to_download.xlsx"
+REPORT_FILE = "Degree_2024_yearly_adv_1719428.xlsx"
+FAILED_FILE = "Degree_failed_to_download.xlsx"
 SHEET_NAME = "Report"
 MAX_RUNS = 5
 
