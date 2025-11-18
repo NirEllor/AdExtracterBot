@@ -287,29 +287,30 @@ def apply_post_attempt_filtering():
 if __name__ == '__main__':
     attempt = 1
     all_files_downloaded = False
-    flag = True
 
     while not all_files_downloaded and attempt <= MAX_RUNS:
         print(f"\n🚀 RUN #{attempt} STARTING...\n")
 
-        if (attempt > 1 or flag) and not all_files_downloaded:
+        if attempt > 1:
             print("Filtering...")
             apply_post_attempt_filtering()
             print("Filtering complete!")
 
-        all_files_downloaded = main(filtered_excel=True)
 
         print(f"📊 Running attempt {attempt} out of {MAX_RUNS}.\n")
 
-        if not all_files_downloaded:
-            print("\n🎉 Finished! No failed creative IDs remain.")
-            break
-
-        if attempt == MAX_RUNS:
-            print(f"\n⚠️ Stopping: reached max attempts ({MAX_RUNS}).")
-            break
+        all_files_downloaded = main(filtered_excel=True)
 
         attempt += 1
+
+
+    if all_files_downloaded:
+        print("\n🎉 Finished! No failed creative IDs remain.")
+
+
+    else:
+        print(f"\n⚠️ Stopping: reached max attempts ({MAX_RUNS}).")
+
 
     print("\n🏁 All done.")
 
