@@ -113,10 +113,10 @@ def extract_url_from_formula(formula):
     return m.group(1) if m else None
 
 
-def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATIVE ID"):
-    print(f"\n📝 Filtering Excel based on previous failures...")
+def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATIVE ID", attempt=2):
+    print(f"\n📝 Filtering Excel (attempt={attempt})...")
 
-    # 1️⃣ Load failed IDs (with cleaning)
+    # Load failed creative IDs
     df_failed = pd.read_excel(failed_ids_excel)
     df_failed[column_name] = (
         df_failed[column_name]
@@ -126,62 +126,51 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     )
     failed_ids = set(df_failed[column_name])
 
-    print("🟥 failed sample:", list(failed_ids)[:10])
-
-    # 2️⃣ Load main Excel USING pandas only to decide which IDs to keep
-    df = pd.read_excel(excel_path, skiprows=7)
-
-    df[column_name] = (
-        df[column_name]
-        .astype(str)
-        .str.replace(r"\.0$", "", regex=True)
-        .str.strip()
-    )
-
-    # IDs to keep
-    filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
-    print("🟦 df sample:", df[column_name].head(10).tolist())
-    print(f"🔍 Number of matches: {len(filtered_ids)}")
-
-    # 3️⃣ Load Excel with openpyxl (preserving formulas)
-    wb = openpyxl.load_workbook(excel_path)
-
-    # Use original sheet name 'Report'
-    if "Report" in wb.sheetnames:
-        ws = wb["Report"]
+    # Choose correct parsing logic:
+    if attempt == 2:
+        skip_rows = 7        # raw file
+        header_row = 8
+        data_start = 9
     else:
-        ws = wb.active  # fallback
-    original_sheet_name = ws.title
+        skip_rows = 0        # filtered file
+        header_row = 1
+        data_start = 2
 
-    # 4️⃣ Create NEW workbook that will contain filtered rows (formulas preserved)
+    print(f"skip_rows={skip_rows}, header_row={header_row}, data_start={data_start}")
+
+    # Load via pandas to know which IDs to keep
+    df = pd.read_excel(excel_path, skiprows=skip_rows)
+    df[column_name] = df[column_name].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
+
+    filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
+    print(f"🔍 Matches found: {len(filtered_ids)}")
+
+    # Load with openpyxl to preserve formulas
+    wb = openpyxl.load_workbook(excel_path)
+    ws = wb["Report"] if "Report" in wb.sheetnames else wb.active
+
     new_wb = openpyxl.Workbook()
     new_ws = new_wb.active
-    new_ws.title = original_sheet_name  # keep original sheet name
+    new_ws.title = ws.title
 
-    # 5️⃣ Copy header row (Excel header is row 8)
-    header_row = 8
+    # Copy header
     for cell in ws[header_row]:
         new_ws.cell(row=1, column=cell.col_idx, value=cell.value)
 
-    # 6️⃣ Copy filtered data rows (starting from row 9)
+    # Copy filtered rows
     new_row = 2
-    for row in ws.iter_rows(min_row=9):
-        creative_value = row[1].value
-        creative_id = str(creative_value).replace(".0", "").strip() if creative_value else ""
+    for row in ws.iter_rows(min_row=data_start):
+        raw_value = row[1].value
+        creative_id = str(raw_value).replace(".0", "").strip() if raw_value else ""
 
         if creative_id in filtered_ids:
             for cell in row:
-                new_ws.cell(
-                    row=new_row,
-                    column=cell.col_idx,
-                    value=cell.value  # COPY formula / URL / value AS-IS
-                )
+                new_ws.cell(row=new_row, column=cell.col_idx, value=cell.value)
             new_row += 1
 
-    # 7️⃣ Save new workbook over original path
     new_wb.save(excel_path)
+    print(f"📝 Filtered file saved: {excel_path}")
 
-    print(f"📝 Filtered file saved (with formulas + original sheet name): {excel_path}")
     return excel_path
 
 
@@ -238,7 +227,7 @@ def main(filtered_excel=False):
 
     return all_files_arrived
 
-def apply_post_attempt_filtering():
+def apply_post_attempt_filtering(attempt=2):
     """
     Applies the filtering logic AFTER attempt #1:
     1. Download original REPORT_FILE from Dropbox
@@ -263,7 +252,8 @@ def apply_post_attempt_filtering():
     filter_failed_files(
         excel_path=temp_local_path,
         failed_ids_excel=FAILED_FILE,
-        column_name="MASTER CREATIVE ID"
+        column_name="MASTER CREATIVE ID",
+        attempt=attempt
     )
 
     # 3 - Upload filtered report back to Dropbox
@@ -291,9 +281,9 @@ if __name__ == '__main__':
     while not all_files_downloaded and attempt <= MAX_RUNS:
         print(f"\n🚀 RUN #{attempt} STARTING...\n")
 
-        if attempt > 1:
+        if attempt > 1:  # Dealing with failed files
             print("Filtering...")
-            apply_post_attempt_filtering()
+            apply_post_attempt_filtering(attempt=attempt)
             print("Filtering complete!")
 
 
