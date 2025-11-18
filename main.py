@@ -1,14 +1,13 @@
 import os
-
-import pandas as pd
-
 from extract import extract
 from investigate import create_driver, login_if_needed, investigate
 from download import download_ads
 import dropbox
-import re
 import time
 from dropbox.files import WriteMode
+import pandas as pd
+import openpyxl
+import re
 
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
@@ -105,32 +104,86 @@ def download_excel_from_dropbox(dbx_instance, root_import_path, file_name, temp_
     return temp_local_path, brand_name
 
 
+
+def extract_url_from_formula(formula):
+    """Extract URL from Excel HYPERLINK formulas."""
+    if not isinstance(formula, str):
+        return None
+    m = re.search(r'HYPERLINK\("([^"]+)"', formula)
+    return m.group(1) if m else None
+
+
 def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATIVE ID"):
-    """
-    Filters the main Excel file based on IDs taken from a separate failed_creative Excel file.
+    print(f"\n📝 Filtering Excel based on previous failures...")
 
-    Args:
-        excel_path (str): Path to the main Excel file to filter.
-        failed_ids_excel (str): Path to the Excel file containing 'MASTER CREATIVE ID' column.
-        column_name (str): Column name to filter by.
-    """
-
-    # Load failed creative IDs file
+    # 1️⃣ Load failed IDs (with cleaning)
     df_failed = pd.read_excel(failed_ids_excel)
-    failed_ids = set(df_failed[column_name].astype(str))
+    df_failed[column_name] = (
+        df_failed[column_name]
+        .astype(str)
+        .str.replace(r"\.0$", "", regex=True)
+        .str.strip()
+    )
+    failed_ids = set(df_failed[column_name])
 
-    # Load the main Excel
-    df = pd.read_excel(excel_path)
-    df[column_name] = df[column_name].astype(str)
+    print("🟥 failed sample:", list(failed_ids)[:10])
 
-    # Filter
-    filtered_df = df[df[column_name].isin(failed_ids)]
+    # 2️⃣ Load main Excel USING pandas only to decide which IDs to keep
+    df = pd.read_excel(excel_path, skiprows=7)
 
-    # Save back to the same file
-    filtered_df.to_excel(excel_path, index=False)
+    df[column_name] = (
+        df[column_name]
+        .astype(str)
+        .str.replace(r"\.0$", "", regex=True)
+        .str.strip()
+    )
 
-    print(f"📝 Excel '{excel_path}' filtered based on '{failed_ids_excel}'")
-    return filtered_df
+    # IDs to keep
+    filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
+    print("🟦 df sample:", df[column_name].head(10).tolist())
+    print(f"🔍 Number of matches: {len(filtered_ids)}")
+
+    # 3️⃣ Load Excel with openpyxl (preserving formulas)
+    wb = openpyxl.load_workbook(excel_path)
+
+    # Use original sheet name 'Report'
+    if "Report" in wb.sheetnames:
+        ws = wb["Report"]
+    else:
+        ws = wb.active  # fallback
+    original_sheet_name = ws.title
+
+    # 4️⃣ Create NEW workbook that will contain filtered rows (formulas preserved)
+    new_wb = openpyxl.Workbook()
+    new_ws = new_wb.active
+    new_ws.title = original_sheet_name  # keep original sheet name
+
+    # 5️⃣ Copy header row (Excel header is row 8)
+    header_row = 8
+    for cell in ws[header_row]:
+        new_ws.cell(row=1, column=cell.col_idx, value=cell.value)
+
+    # 6️⃣ Copy filtered data rows (starting from row 9)
+    new_row = 2
+    for row in ws.iter_rows(min_row=9):
+        creative_value = row[1].value
+        creative_id = str(creative_value).replace(".0", "").strip() if creative_value else ""
+
+        if creative_id in filtered_ids:
+            for cell in row:
+                new_ws.cell(
+                    row=new_row,
+                    column=cell.col_idx,
+                    value=cell.value  # COPY formula / URL / value AS-IS
+                )
+            new_row += 1
+
+    # 7️⃣ Save new workbook over original path
+    new_wb.save(excel_path)
+
+    print(f"📝 Filtered file saved (with formulas + original sheet name): {excel_path}")
+    return excel_path
+
 
 def main(filtered_excel=False):
     start_time = time.time()
@@ -234,12 +287,15 @@ def apply_post_attempt_filtering():
 if __name__ == '__main__':
     attempt = 1
     all_files_downloaded = False
+    flag = True
 
-    while all_files_downloaded and attempt <= MAX_RUNS:
+    while not all_files_downloaded and attempt <= MAX_RUNS:
         print(f"\n🚀 RUN #{attempt} STARTING...\n")
 
-        if attempt > 1 and not all_files_downloaded:
+        if (attempt > 1 or flag) and not all_files_downloaded:
+            print("Filtering...")
             apply_post_attempt_filtering()
+            print("Filtering complete!")
 
         all_files_downloaded = main(filtered_excel=True)
 
