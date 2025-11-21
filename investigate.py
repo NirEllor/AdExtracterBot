@@ -264,6 +264,7 @@ def investigate(urls, driver, ads, brand_name, max_workers=NUM_WORKERS):
     print(f"\n🏁 Investigation complete for '{brand_name}'.")
     print(f"✅ Total creatives with media found: "
           f"{sum(1 for v in ads.values() if v)} / {len(urls)}")
+    return failed_creative_ids
 
 if __name__ == '__main__':
     pass

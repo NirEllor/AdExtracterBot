@@ -18,8 +18,8 @@ os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-REPORT_FILE = "Degree_2024_yearly_adv_1719428.xlsx"
-FAILED_FILE = "Degree_failed_to_download.xlsx"
+REPORT_FILE = "Garnier_Fructis_2024_Yearly_1718250.xlsx"
+FAILED_FILE = "Garnier_Fructis_failed_to_download.xlsx"
 SHEET_NAME = "Report"
 MAX_RUNS = 5
 
@@ -42,7 +42,7 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
 
     ads = {}
     print("🧠 Investigating ads...")
-    investigate(urls, driver, ads, brand_name)
+    failed_creative_ids = investigate(urls, driver, ads, brand_name)
     print(f"✅ Investigation complete. Found {len(ads)} ads.")
 
     print("🧹 Browser closed.")
@@ -64,7 +64,7 @@ def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
 
     print(f"✅ Finished run() for: {subfolder_path}\n")
 
-    return True if not failed_files else False
+    return True if not (failed_files or failed_creative_ids) else False
 
 
 

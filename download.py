@@ -72,6 +72,7 @@ def download_ads(ads, brand_name, place_for_files):
             try:
                 result_path, ext = future.result()
                 if ext == ".bin": # File gone wrong
+                    print(f"failed file detected - {creative_id}")
                     failed_creative_ids.add(creative_id)
                 completed += 1
                 print(f"📥 {completed}/{total} הורדות הושלמו ({creative_id})")
