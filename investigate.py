@@ -14,7 +14,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-CHROMEDRIVER_PATH = r"C:\Users\Nir\PycharmProjects\AdExtracterBot\chromedriver.exe"
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
 TOO_MUCH_TIME = 6 * 60 * 60
@@ -40,13 +39,14 @@ def login_if_needed(driver):
     driver.get(LOGIN_URL)
     time.sleep(2)
     now = time.time()
-    mtime = os.path.getmtime(COOKIES_FILE)
+    exist = os.path.exists(COOKIES_FILE)
+    mtime = os.path.getmtime(COOKIES_FILE) if exist else False
 
 
 
-    if os.path.exists(COOKIES_FILE) and now - mtime > TOO_MUCH_TIME: # Old cookies
+    if exist and now - mtime > TOO_MUCH_TIME: # Old cookies
         os.remove(COOKIES_FILE)
-    if os.path.exists(COOKIES_FILE): # Fresh cookies
+    elif exist: # Fresh cookies
         try:
             cookies = pickle.load(open(COOKIES_FILE, "rb"))
             for c in cookies:

@@ -8,9 +8,12 @@ from dropbox.files import WriteMode
 import pandas as pd
 import openpyxl
 import re
+from reports import reports, to_failed_filename
 
 
-PLACE_FOR_FILES = r"D:\Vivix_Media_Files"
+
+
+PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
 
 os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
@@ -18,10 +21,14 @@ os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
 ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
 ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-REPORT_FILE = "Garnier_Fructis_2024_Yearly_1718250.xlsx"
-FAILED_FILE = "Garnier_Fructis_failed_to_download.xlsx"
+FAILED_FILES_EXCELS = list(map(to_failed_filename, reports))
+
+
+
+REPORT_FILE = "Ford_2024_yearly_1711271.xlsx"
+FAILED_FILE = "Ford_failed_to_download.xlsx"
 SHEET_NAME = "Report"
-MAX_RUNS = 5
+MAX_RUNS = 8
 
 dbx = dropbox.Dropbox(
     oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
@@ -174,7 +181,7 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     return excel_path
 
 
-def main(filtered_excel=False):
+def process_single_run(filtered_excel=False):
     start_time = time.time()
 
     print("🚀 Initializing Chrome driver...")
@@ -274,6 +281,7 @@ def apply_post_attempt_filtering(attempt=2):
         print(f"⚠️ Could not remove temp file: {e}")
 
 
+
 if __name__ == '__main__':
     attempt = 1
     all_files_downloaded = False
@@ -289,7 +297,7 @@ if __name__ == '__main__':
 
         print(f"📊 Running attempt {attempt} out of {MAX_RUNS}.\n")
 
-        all_files_downloaded = main(filtered_excel=True)
+        all_files_downloaded = process_single_run(filtered_excel=True)
 
         attempt += 1
 
