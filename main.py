@@ -25,8 +25,8 @@ FAILED_FILES_EXCELS = list(map(to_failed_filename, reports))
 
 
 
-REPORT_FILE = "Ford_2024_yearly_1711271.xlsx"
-FAILED_FILE = "Ford_failed_to_download.xlsx"
+REPORT_FILE = "Dunkin_Donuts_2024_Yearly_2024_1727795.xlsx"
+FAILED_FILE = "Dunkin_Donuts_failed_to_download.xlsx"
 SHEET_NAME = "Report"
 MAX_RUNS = 8
 
