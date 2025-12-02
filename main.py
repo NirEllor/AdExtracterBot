@@ -8,27 +8,15 @@ from dropbox.files import WriteMode
 import pandas as pd
 import openpyxl
 import re
-from reports import reports, to_failed_filename
-
-
-
+from reports import brands, to_failed_filename
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
-
-os.makedirs(PLACE_FOR_FILES, exist_ok=True)
-
-
-
-ROOT_IMPORT_PATH = "/AdSpender/Vivvix Data/vivvix_reports_for_download"
-ROOT_EXPORT_PATH = "/AdSpender/Vivvix Data/Media_files"
-FAILED_FILES_EXCELS = list(map(to_failed_filename, reports))
-
-
-
-REPORT_FILE = "Dunkin_Donuts_2024_Yearly_2024_1727795.xlsx"
-FAILED_FILE = "Dunkin_Donuts_failed_to_download.xlsx"
+ROOT_IMPORT_PATH = os.getenv("DROPBOX_DETAILED_REPORTS_PATH")
+ROOT_EXPORT_PATH = os.getenv("DROPBOX_UPLOAD_FOLDER_PATH")
 SHEET_NAME = "Report"
 MAX_RUNS = 8
+
+os.makedirs(PLACE_FOR_FILES, exist_ok=True)
 
 dbx = dropbox.Dropbox(
     oauth2_refresh_token=os.getenv("DROPBOX_REFRESH_TOKEN"),
@@ -36,7 +24,10 @@ dbx = dropbox.Dropbox(
     app_secret=os.getenv("DROPBOX_APP_SECRET"),
 )
 
-def run(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
+
+
+
+def ads_extractor_bot(driver, subfolder_path, brand_name, file_name, filtered_excel=False):
     print(f"\n🚀 Starting run() for: {subfolder_path}")
 
     print("🌐 Creating driver and logging in (if needed)...")
@@ -181,7 +172,7 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     return excel_path
 
 
-def process_single_run(filtered_excel=False):
+def process_single_run(report_name, filtered_excel=False):
     start_time = time.time()
 
     print("🚀 Initializing Chrome driver...")
@@ -193,11 +184,11 @@ def process_single_run(filtered_excel=False):
     print("✅ Login check complete.\n")
 
     print("🚀 Starting main() process...")
-    print(f"📄 Working on single source file: {REPORT_FILE}")
+    print(f"📄 Working on single source file: {report_name}")
 
     # 1 - Download the specific file only
     temp_local_path, brand_name = download_excel_from_dropbox(
-        dbx, ROOT_IMPORT_PATH, REPORT_FILE
+        dbx, ROOT_IMPORT_PATH, report_name
     )
 
     if not temp_local_path:
@@ -208,7 +199,7 @@ def process_single_run(filtered_excel=False):
     subfolder_path = f"{ROOT_EXPORT_PATH}/{brand_name}"
 
     # 2 - Run main processing (extract → investigate → download media)
-    all_files_arrived = run(
+    all_files_arrived = ads_extractor_bot(
         driver,
         subfolder_path,
         brand_name,
@@ -234,7 +225,7 @@ def process_single_run(filtered_excel=False):
 
     return all_files_arrived
 
-def apply_post_attempt_filtering(attempt=2):
+def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2):
     """
     Applies the filtering logic AFTER attempt #1:
     1. Download original REPORT_FILE from Dropbox
@@ -248,7 +239,7 @@ def apply_post_attempt_filtering(attempt=2):
     temp_local_path, _ = download_excel_from_dropbox(
         dbx,
         ROOT_IMPORT_PATH,
-        REPORT_FILE
+        report_name
     )
 
     if not temp_local_path:
@@ -258,7 +249,7 @@ def apply_post_attempt_filtering(attempt=2):
     # 2 - Apply filtering using FAILED_FILE
     filter_failed_files(
         excel_path=temp_local_path,
-        failed_ids_excel=FAILED_FILE,
+        failed_ids_excel=failed_files_excel_name,
         column_name="MASTER CREATIVE ID",
         attempt=attempt
     )
@@ -267,7 +258,7 @@ def apply_post_attempt_filtering(attempt=2):
     with open(temp_local_path, "rb") as f:
         dbx.files_upload(
             f.read(),
-            f"{ROOT_IMPORT_PATH}/{REPORT_FILE}",
+            f"{ROOT_IMPORT_PATH}/{report_name}",
             mode=WriteMode.overwrite
         )
 
@@ -281,8 +272,7 @@ def apply_post_attempt_filtering(attempt=2):
         print(f"⚠️ Could not remove temp file: {e}")
 
 
-
-if __name__ == '__main__':
+def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
     attempt = 1
     all_files_downloaded = False
 
@@ -291,13 +281,13 @@ if __name__ == '__main__':
 
         if attempt > 1:  # Dealing with failed files
             print("Filtering...")
-            apply_post_attempt_filtering(attempt=attempt)
+            apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=attempt)
             print("Filtering complete!")
 
 
-        print(f"📊 Running attempt {attempt} out of {MAX_RUNS}.\n")
+        print(f"📊 Running attempt {attempt} out of {max_runs}.\n")
 
-        all_files_downloaded = process_single_run(filtered_excel=True)
+        all_files_downloaded = process_single_run(report_name, filtered_excel=True)
 
         attempt += 1
 
@@ -311,6 +301,55 @@ if __name__ == '__main__':
 
 
     print("\n🏁 All done.")
+
+
+def extract_report_name(dbx_instance, brand, root_import_path=ROOT_IMPORT_PATH):
+    """
+    Returns the first Excel file name in a Dropbox folder that contains BRAND in its name.
+    If multiple files match, returns the first one found.
+    If none match, returns None.
+    """
+    print(f"📂 Scanning Dropbox folder: {root_import_path}")
+    print(f"🔎 Looking for Excel file containing brand: '{brand}'")
+
+    try:
+        result = dbx_instance.files_list_folder(root_import_path)
+    except Exception as e:
+        print(f"❌ Failed to access folder: {e}")
+        return None
+
+    BRAND_lower = brand.lower()
+
+    for entry in result.entries:
+        if not isinstance(entry, dropbox.files.FileMetadata):
+            continue
+
+        name = entry.name
+
+        # Only Excel files
+        if not name.lower().endswith(".xlsx"):
+            continue
+
+        # Does the file contain the brand?
+        if BRAND_lower in name.lower():
+            print(f"✅ Found matching file: {name}")
+            return name
+
+    print(f"⚠️ No Excel file found for brand '{brand}'.")
+    return None
+
+
+
+def main():
+    for brand in brands:
+        report_name = extract_report_name(dbx, brand)
+        failed_files_excel_name = to_failed_filename(report_name)
+        run(report_name=report_name, failed_files_excel_name=failed_files_excel_name)
+
+
+if __name__ == '__main__':
+    main()
+
 
 
 
