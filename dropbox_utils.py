@@ -1,9 +1,16 @@
 import os
-import re
 from dropbox.files import WriteMode
 import dropbox
 from config import  ROOT_IMPORT_PATH
+from reports_utils import brands
 
+
+def extract_brand_name_from_filename(file_name, brands_list):
+    lower_name = file_name.lower()
+    for brand in brands_list:
+        if brand.lower().replace(" ", "") in lower_name.replace(" ", "").replace("_", ""):
+            return brand
+    return None
 
 
 
@@ -31,11 +38,8 @@ def download_excel_from_dropbox(dbx_instance, root_import_path, file_name, temp_
         return None, None
 
     # Extract brand name from filename
-    match = re.match(r"^(.*?)_\d", file_name)
-    if match:
-        brand_name = match.group(1)
-    else:
-        brand_name = file_name.rsplit(".", 1)[0]
+
+    brand_name = extract_brand_name_from_filename(file_name, brands)
 
     print(f"🏷️ Extracted brand name: {brand_name}")
 
@@ -56,7 +60,7 @@ def extract_report_name(dbx_instance, brand, root_import_path=ROOT_IMPORT_PATH):
         print(f"❌ Failed to access folder: {e}")
         return None
 
-    BRAND_lower = brand.lower()
+    brand_lower = brand.lower()
 
     for entry in result.entries:
         if not isinstance(entry, dropbox.files.FileMetadata):
@@ -69,7 +73,7 @@ def extract_report_name(dbx_instance, brand, root_import_path=ROOT_IMPORT_PATH):
             continue
 
         # Does the file contain the brand?
-        if BRAND_lower in name.lower():
+        if brand_lower in name.lower():
             print(f"✅ Found matching file: {name}")
             return name
 

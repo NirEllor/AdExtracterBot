@@ -158,6 +158,13 @@ def extract_external_urls(urls, creative_id_set, excel_path, sheet_name, filtere
         if filtered_excel and url.row in hidden_rows:
             continue
 
+        # 🚫 Case B: explicitly "CREATIVE UNKNOWN"
+        raw_value = url.value
+        raw_str = str(raw_value).strip()
+
+        if raw_str.lower().startswith("creative unknown"):
+            continue
+
         value = str(url.value)
         match = re.search(pattern, value)
 
