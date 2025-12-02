@@ -1,6 +1,8 @@
-brands = {"activia"
+brands = [
+'Jamba_juice',
+    "breyers",
 
-}
+]
 
 
 def to_failed_filename(s: str) -> str:
