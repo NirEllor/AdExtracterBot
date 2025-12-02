@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+from config import USERNAME, PASSWORD
 
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
@@ -21,8 +22,7 @@ NUM_WORKERS = 1 # DO NOT CHANGE UNLESS NIR TOLD YOU
 
 load_dotenv()
 
-USERNAME = os.getenv("APP_USERNAME")
-PASSWORD = os.getenv("APP_PASSWORD")
+
 if not USERNAME or not PASSWORD:
     raise RuntimeError("Missing credentials: set APP_USERNAME and APP_PASSWORD in env")
 

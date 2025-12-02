@@ -1,5 +1,4 @@
-brands = {"breyers",
-          "activia",
+brands = {"activia"
 
 }
 

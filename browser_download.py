@@ -1,20 +1,22 @@
-import os
 import re
 import requests
+import boto3
+from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+s3 = boto3.client("s3")
+S3_BUCKET = "ad-extracter-bot-bucket"    # <-- CHANGE THIS
 
-def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files"):
+
+def download_media(creative_id, url, brand_name, base_dir=None):
     headers = {"User-Agent": "Mozilla/5.0"}
-
-
-
 
     try:
         with requests.get(url, stream=True, timeout=40, headers=headers) as response:
             response.raise_for_status()
             content_type = response.headers.get("Content-Type", "").lower()
 
+            # HTML wrapper - extract inner <img>
             if "text/html" in content_type:
                 html = response.text
                 match = re.search(r'<img[^>]+src="([^"]+)"', html)
@@ -23,7 +25,7 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
                     print(f"🔗 HTML detected — fetching inner image: {real_url}")
                     return download_media(creative_id, real_url, brand_name, base_dir)
 
-
+            # Determine type & extension
             if "image" in content_type:
                 subdir = "images"
                 ext = "." + content_type.split("/")[-1].split(";")[0]
@@ -34,19 +36,22 @@ def download_media(creative_id, url, brand_name, base_dir=r"C:\Vivix_Media_Files
                 subdir = "other"
                 ext = ".bin"
 
-            output_dir = os.path.join(base_dir, brand_name, subdir)
-            os.makedirs(output_dir, exist_ok=True)
-
+            # Build S3 key
             filename = f"{creative_id}{ext}"
-            output_path = os.path.join(output_dir, filename)
+            s3_key = f"{brand_name}/{subdir}/{filename}"
 
-            with open(output_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+            # Stream the download into memory and upload to S3
+            file_buffer = BytesIO()
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    file_buffer.write(chunk)
 
-        print(f"✅ Saved {output_path}")
-        return output_path, ext
+            file_buffer.seek(0)
+
+            s3.upload_fileobj(file_buffer, S3_BUCKET, s3_key)
+
+        print(f"✅ Uploaded to s3://{S3_BUCKET}/{s3_key}")
+        return f"s3://{S3_BUCKET}/{s3_key}", ext
 
     except Exception as e:
         print(f"❌ Error Downloading {url}: {e}")
@@ -62,7 +67,7 @@ def download_ads(ads, brand_name, place_for_files):
 
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = {
-            executor.submit(download_media, creative_id, url, brand_name): creative_id
+            executor.submit(download_media, creative_id, url, brand_name, None): creative_id
             for creative_id, url in ads.items()
         }
 
@@ -71,14 +76,14 @@ def download_ads(ads, brand_name, place_for_files):
             creative_id = futures[future]
             try:
                 result_path, ext = future.result()
-                if ext == ".bin": # File gone wrong
+                if ext == ".bin":
                     print(f"failed file detected - {creative_id}")
                     failed_creative_ids.add(creative_id)
+
                 completed += 1
                 print(f"📥 {completed}/{total} הורדות הושלמו ({creative_id})")
             except Exception as e:
                 print(f"⚠️ שגיאה במדיה {creative_id}: {e}")
-
 
     print(f"🏁 כל {total} ההורדות הושלמו עבור '{brand_name}'!")
     return failed_creative_ids
