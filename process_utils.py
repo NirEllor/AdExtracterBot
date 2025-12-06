@@ -162,7 +162,7 @@ def process_single_run(report_name, filtered_excel=False):
 
 
 def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
-    attempt = 1
+    attempt = 1 if not os.path.exists(failed_files_excel_name) else 2
     all_files_downloaded = False
 
     while not all_files_downloaded and attempt <= MAX_RUNS:

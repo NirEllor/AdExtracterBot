@@ -8,7 +8,7 @@ from reports_utils import brands
 def extract_brand_name_from_filename(file_name, brands_list):
     lower_name = file_name.lower()
     for brand in brands_list:
-        if brand.lower().replace(" ", "") in lower_name.replace(" ", "").replace("_", ""):
+        if brand.lower() in lower_name:
             return brand
     return None
 

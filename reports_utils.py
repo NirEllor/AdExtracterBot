@@ -1,12 +1,27 @@
 brands = [
-    'starbucks',
-'Jamba_juice',
-    "breyers",
+    "SmartWater",
+    "Nestea",
+    "Vitamin_Water",
+    "Red_Bull",
+    "Sprite",
+    "Heineken",
+    "Tropicana",
+    "Lipton",
+    'Diet_Pepsi_Max',
+    "Dr_Pepper",
+    "Coca_Cola",
+    "Gold_Peak",
+    "7UP",
+    "Coca_Cola_Diet",
+    "Dr_Pepper_Diet",
+    "Crystal_light",
+    "A_W",
+]
+
+brands_leftovers = [
 
 ]
 
-
-def to_failed_filename(s: str) -> str:
-    prefix = s.split("_", 1)[0]
-    return prefix + "_failed_to_download.xlsx"
-
+problematic = [
+    "Pepsi_2024",
+]
