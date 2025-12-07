@@ -1,9 +1,11 @@
 import json
 import os
 import time
+from datetime import datetime
+
 import pandas as pd
-from io import StringIO
 import requests
+
 from browser_investigate import login_if_needed, create_driver
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -13,9 +15,6 @@ FILES_REPORTS_DETAILED = r"C:\Vivix_Media_Files\Reports_Detailed"
 
 brands = [
     'starbucks',
-'Jamba_juice',
-    "breyers",
-
 ]
 
 def to_failed_filename(s: str) -> str:
@@ -23,91 +22,6 @@ def to_failed_filename(s: str) -> str:
     return prefix + "_failed_to_download.xlsx"
 
 
-
-search_payload = {"SearchTerm": "",
-                  "SearchType": 4,
-                  "Take": 250,
-                  "Skip": 0,
-                  "Page": 0,
-                  "PageSize": 0,
-                  "EntitySet": {"EntitySetId": 10, "Name": "ReportSpecBC", "EntitySetType": 10, "Entities": [],
-                                "IsActive": True, "AllEntitiesAreSelected": False},
-                  "EntityTypes": [118],
-                  "CategoryCodeEnabled": False,
-                  "ExcludedSearchEntityItems": [{"EntityItemId": 522,
-                                                 "Seq": 0,
-                                                 "EntityName": None,
-                                                 "EntityLongName": None,
-                                                 "EntityCode": None,
-                                                 "EntityNameWithGroupCount": None,
-                                                 "GroupName": "",
-                                                 "IsOwnedByMe": False,
-                                                 "GroupEntityItemId": None,
-                                                 "ISAdvEntityType": False,
-                                                 "ISCatEntityType": True,
-                                                 "EntityItemTypeDisplay": "Category",
-                                                 "IsAGroup": False, "BelongsToGroup": False,
-                                                 "NumberOfItemsInGroup": 0,
-                                                 "StartDateAsString": None,
-                                                 "Media": 0, "MediaType": 0,
-                                                 "MarketId": 0,
-                                                 "IsEntitySelected": False,
-                                                 "IsEntitySelectable": False,
-                                                 "IsEntityForcedSelected": False,
-                                                 "EntityForcedSelectedReason": None,
-                                                 "DisplayOrder": 0, "StateName": None,
-                                                 "DMARank": 0,
-                                                 "BrandCategoryEntityTypeDisplayOrder": 0,
-                                                 "ProgramEntityTypeDisplayOrder": 0,
-                                                 "ShowGroupMembersOnReport": False,
-                                                 "CanBeDeletedFromSystem": False,
-                                                 "ShowGroupMembersDesc": "",
-                                                 "UniqueId": "103_0",
-                                                 "GroupedEntities": None,
-                                                 "SharedEntity": None,
-                                                 "IsExclude": False,
-                                                 "EntityId": 0,
-                                                 "EntityType": 103}],
-                  "HideSummaryMediaItems": False}
-
-HEADERS = {
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Encoding': 'gzip',
-    'Accept-Language': 'en',
-    'Connection': 'keep-alive',
-    'Host': 'app.vivvix.com',
-    'Origin': 'https://app.vivvix.com',
-    'Referer': 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/Spas/CustomReporting/CustomReportingPage.aspx?.pl=EditCustomReportSpec',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-origin',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
-    'sec-ch-ua': 'Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"'
-}
-
-driver = create_driver()
-login_if_needed(driver)
-
-cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-cookie_header = "; ".join([f"{k}={v}" for k, v in cookies.items()])
-
-HEADERS["Cookie"] = cookie_header
-
-print("🔥 Cookie injected into HEADERS automatically")
-
-
-df = pd.read_excel('brands.xlsx', header=None)
-brands_excel_raw = df[0]
-
-non_empty = brands_excel_raw[brands_excel_raw.astype(str).str.strip() != ""]
-
-first_brand_row_idx = non_empty.index[0]
-last_brand_row_idx = non_empty.index[-1] + 1
-
-brands_excel = brands_excel_raw[first_brand_row_idx:last_brand_row_idx].to_numpy()
 
 
 
@@ -118,13 +32,17 @@ def create_report(brand_name: str):
 
     # Load payload template
     print("📄 Loading payload template...")
-    with open('creatives_payload.json') as user_file:
-        file_contents = user_file.read()
+    with open('creatives_payload.json') as creatives_payload_file:
+        payload = json.load(creatives_payload_file)
 
-    payload = json.loads(file_contents)
+    with open("search_payload.json", "r", encoding="utf-8") as search_payload_file:
+        search_payload = json.load(search_payload_file)
+
 
     # Insert brand into payload
-    payload['Title'] = brand_name
+    unique_title = f"{brand_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+    payload['Title'] = unique_title
     search_payload['SearchTerm'] = brand_name
 
     print(f"🔍 Searching entity for brand: {brand_name}")
@@ -133,7 +51,7 @@ def create_report(brand_name: str):
     search_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/Entity/EntitySearch'
     brand_search = requests.post(
         search_url,
-        headers=HEADERS,
+        headers=headers,
         json=search_payload,
         verify=False
     ).content
@@ -172,7 +90,7 @@ def create_report(brand_name: str):
     create_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/CreateReportSpec'
     print(f"➡️ Sending CreateReportSpec → {create_url}")
 
-    create_rep = requests.post(create_url, headers=HEADERS, verify=False)
+    create_rep = requests.post(create_url, headers=headers, verify=False, json=payload)
     print(f"   🔹 Status: {create_rep.status_code}")
     print(f"   🔹 Response: {create_rep.text[:400]}")
 
@@ -180,7 +98,7 @@ def create_report(brand_name: str):
     update_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/UpdateReportSpec'
     print(f"➡️ Updating report spec → {update_url}")
 
-    update_report_resp = requests.post(update_url, headers=HEADERS, json=payload, verify=False)
+    update_report_resp = requests.post(update_url, headers=headers, json=payload, verify=False)
     print(f"   🔹 Status: {update_report_resp.status_code}")
     print(f"   🔹 Response: {update_report_resp.text[:400]}")
 
@@ -188,17 +106,17 @@ def create_report(brand_name: str):
     save_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/SaveReportSpec'
     print(f"➡️ Saving report spec → {save_url}")
 
-    save_report = requests.post(save_url, headers=HEADERS, data=brand_name + '*', verify=False)
+    save_report = requests.post(save_url, headers=headers, data=unique_title, verify=False)
     print(f"   🔹 Status: {save_report.status_code}")
-    print(f"   🔹 Raw Response (reportSpecId): {save_report.text}")
+    # print(f"   🔹 Raw Response (reportSpecId): {save_report.text}")
 
     report_spec_id = save_report.text.strip()
 
     if not report_spec_id.isdigit():
-        print(f"❌ ERROR: Invalid reportSpecId returned: {report_spec_id}")
+        print(f"❌ ERROR: Invalid reportSpecId returned")
         return None
 
-    print(f"✅ Extracted reportSpecId = {report_spec_id}")
+    print(f"✅ Extracted reportSpecId")
 
     # Step 4: RunReport
     run_url = (
@@ -210,7 +128,7 @@ def create_report(brand_name: str):
 
     run_report = requests.post(
         run_url,
-        headers=HEADERS,
+        headers=headers,
         data=f'reportSpecId={report_spec_id}&action=Run',
         verify=False
     )
@@ -233,14 +151,14 @@ def check_reports_status():
     print("➡️ Sending request to GetReportListData...")
     get_reports = requests.get(
         'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/GetReportListData?mode=FullView',
-        headers=HEADERS, data='FullView', verify=False
+        headers=headers, data='FullView', verify=False
     )
 
     print(f"   🔹 HTTP Status: {get_reports.status_code}")
 
     if get_reports.status_code != 200:
         print("❌ Failed to fetch report list!")
-        return False
+        return 2
 
     time.sleep(3)
 
@@ -263,13 +181,13 @@ def check_reports_status():
         print("⏳ Some reports are NOT finished yet:")
         for item in incomplete:
             print(f"   • ID {item['ReportId']} | {item['Name']} | Status={item['Status']}")
-        print("❌ Reports are still running...\n")
+        print("⚠️Reports are still being created...⚠️\n")
         return False
 
     print("✅ All reports completed successfully!\n")
     return True
 
-def create_multiple_reps(start, end):
+def create_multiple_reps(brands_excel, start, end):
     print('Creating reports')
     for brand in brands_excel[start:end]:
         try:
@@ -280,8 +198,14 @@ def create_multiple_reps(start, end):
 
     # Wait until reports are completed
     print('Reports created, waiting for reports to run')
-    while not check_reports_status():
+
+    finished_creating = check_reports_status()
+    while not finished_creating:
+        print(f"finish_creating is {finished_creating}, sleeping and running again")
         time.sleep(60)
+        print("running again")
+        finished_creating = check_reports_status()
+    return finished_creating
 
 
 # Gets download link of reports created
@@ -295,14 +219,14 @@ def get_download_links(brand_names):
     links = []
 
     # Get all reports
-    print("➡️ Sending request to GetReportListData...")
+    # print("➡️ Sending request to GetReportListData...")
     get_reports = requests.get(
         'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/GetReportListData?mode=FullView',
-        headers=HEADERS,
+        headers=headers,
         data='FullView',
         verify=False
     )
-    print(f"   🔹 HTTP Status: {get_reports.status_code}")
+    # print(f"   🔹 HTTP Status: {get_reports.status_code}")
 
     if get_reports.status_code != 200:
         print("❌ Failed to fetch report list!")
@@ -336,25 +260,18 @@ def get_download_links(brand_names):
         print(f"   • Report Name: {report_name}")
         print(f"   • Status: {status}")
 
-        # Clean brand name by removing last suffix (usually date/time)
+        # Clean brand name by removing the last suffix (usually date/time)
         name = report_name.rsplit(' ', 1)[0]
         print(f"   • Extracted brand name: {name}")
 
         # Build download URLs
-        creative_link = (
-            f'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/Pages/'
-            f'CreativePages/DownloadCreatives.aspx?.pl=DownloadCreatives'
-            f'&searchType=CustomReporting&reportId={report_id}'
-        )
+        excel_link = key['ReportOutputs'][1]['FullFilePath']
 
-        csv_link = key['ReportOutputs'][0]['FullFilePath']
 
-        print(f"   • Creative ZIP link: {creative_link}")
-        print(f"   • CSV/Excel file link: {csv_link}")
+        print(f"   • CSV/Excel file link: {excel_link}")
 
         links.append({
-            'Creative': creative_link,
-            'CSV': csv_link,
+            'XLSX': excel_link,
             'reportID': report_id,
             'Brand': name
         })
@@ -368,20 +285,9 @@ def get_download_links(brand_names):
     return links
 
 
-def download_excel_report(csv_url, download_path, brand_name):
-    response = requests.get(csv_url)
-    response.raise_for_status()
-
-    df_ = pd.read_csv(StringIO(response.text))
-
-    excel_path = os.path.join(download_path, f"{brand_name}.xlsx")
-
-    df_.to_excel(excel_path, index=False)
-    print(f"Saved Excel report: {excel_path}")
 
 
-# Downloads all reports through their links
-def download_reports(start, end, path):
+def download_reports(brands_excel, start, end, path):
     print("\n============================")
     print(f"📥 Starting download for brands[{start}:{end}]")
     print("============================")
@@ -389,54 +295,61 @@ def download_reports(start, end, path):
     links = get_download_links(brands_excel[start:end])
     print(f"🔍 Found {len(links)} completed reports in Vivvix.")
 
-    if len(links) == 0:
+    if not links:
         print("⚠️ No reports found. Skipping download.\n")
         return
 
     if not os.path.exists(path):
-        print(f"📁 Creating main download folder: {path}")
         os.makedirs(path)
-    else:
-        print(f"📁 Main folder already exists: {path}")
-
-    print("🔧 Preparing download headers...")
-    download_header = HEADERS.copy()
-    download_header['Accept'] = (
-        'text/html,application/xhtml+xml,application/xml;q=0.9,'
-        'image/avif,image/webp,image/apng,*/*;q=0.8,application/'
-        'signed-exchange;v=b3;q=0.7'
-    )
-    download_header['Accept-Encoding'] = 'gzip, deflate, br'
 
     print("\n📥 Downloading reports:")
 
     for item in links:
-        brand = item['Brand'].replace('*', '').strip()
-        csv_url = item['CSV']
+        brand = item["Brand"].replace("*", "").strip()
+        xlsx_url = item["XLSX"]   # ← שדה חדש
 
         print(f"\n➡️ Processing brand: {brand}")
 
         download_path = os.path.join(path, brand)
-        print(f"   📁 Creating folder: {download_path}")
-        try:
-            os.mkdir(download_path)
-        except FileExistsError:
-            print(f"   ⚠️ Folder already exists, skipping create.")
 
-        print(f"   📄 Downloading Excel report from CSV URL...")
+        os.makedirs(download_path, exist_ok=True)
+
         try:
-            download_excel_report(csv_url, download_path, brand)
-            print(f"   ✅ Excel saved for: {brand}")
+            print(f"   📄 Downloading XLSX from {xlsx_url} ...")
+            response = requests.get(xlsx_url)
+
+            response.raise_for_status()
+
+            brand_clean = str(brand)
+            file_path = os.path.join(str(download_path), f"{str(brand_clean)}.xlsx")
+
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+
+            print(f"   ✅ Saved Excel: {file_path}")
+
         except Exception as e:
-            print(f"   ❌ Failed to download Excel for brand '{brand}': {e}")
+            print(f"   ❌ Failed to download XLSX for brand '{brand}': {e}")
 
     print("\n🎉 All downloads completed!")
     print("============================\n")
 
+def get_sliced_excel_with_brands_names():
+    try:
+
+        df = pd.read_excel('brands.xlsx', header=None)
+        brands_excel_raw = df[0]
+        non_empty = brands_excel_raw[brands_excel_raw.astype(str).str.strip() != ""]
+        first_brand_row = non_empty.index[0]
+        last_brand_row = non_empty.index[-1] + 1
+        return brands_excel_raw[first_brand_row:last_brand_row].to_numpy(), first_brand_row, last_brand_row
+    except FileNotFoundError as e:
+        print(e)
+        return None, None, None
 
 
 # Runs the whole process at once
-def run_batch(start, end, download_path):
+def run_batch(brands_excel, start, end, download_path):
     print("\n============================")
     print(f"🚀 Running batch: brands[{start}:{end}]")
     print("============================")
@@ -445,15 +358,17 @@ def run_batch(start, end, download_path):
     print(f"📦 Number of brands in this batch: {batch_size}")
 
     print("🔍 Brands in batch:")
-    for b in brands[start:end]:
+    for b in brands_excel[start:end]:
         print(f"   • {b}")
 
     print("\n🛠️ Step 1: Creating reports...")
-    create_multiple_reps(start, end)
-    print("✅ Finished creating report specs.\n")
+    status = create_multiple_reps(brands_excel, start, end)
+    if status == 2:
+        return None
+    print("✅ Finished creating report specs.\n") if status else print("Not yet...")
 
     print("🛠️ Step 2: Searching for completed reports...")
-    links = get_download_links(brands[start:end])
+    links = get_download_links(brands_excel[start:end])
 
     print(f"📄 Found {len(links)} completed reports ready for download.")
 
@@ -461,16 +376,31 @@ def run_batch(start, end, download_path):
         print("⚠️ No completed reports found for this batch. Skipping download.\n")
         return
 
-    print("\n🛠️ Step 3: Downloading reports and creatives...")
-    download_reports(start, end, download_path)
+    print("\n🛠️ Step 3: Downloading reports")
+    download_reports(brands_excel, start, end, download_path)
 
     print(f"🎉 Batch completed successfully for brands[{start}:{end}]")
     print("============================\n")
 
 
 if __name__ == '__main__':
+    driver = create_driver()
+    cookies = login_if_needed(driver)
+
+    with open("headers.json", "r", encoding="utf-8") as headers_file:
+        headers = json.load(headers_file)
+
+    cookie_header = "; ".join([f"{c['name']}={c['value']}" for c in cookies])
+    headers["Cookie"] = cookie_header
+
+
+    print("🔥 Cookie injected into HEADERS automatically")
+
+    excel, first_brand_row_idx, last_brand_row_idx = get_sliced_excel_with_brands_names()
+
+
     # links = get_download_links(brands_excel[first_brand_row_idx:last_brand_row_idx])
-    download_reports(first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED)
+    # download_reports(first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED)
     # check_reports_status()
-    # run_batch(first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED
-    #           )
+    if excel is not None:
+        run_batch(excel, first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED)
