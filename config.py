@@ -2,7 +2,6 @@ import os
 import dropbox
 from dotenv import load_dotenv
 
-# ← טוען את משתני הסביבה מהקובץ .env
 load_dotenv()
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"

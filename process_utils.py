@@ -87,12 +87,13 @@ def init_driver_session():
 
     return driver
 
-def download_report_locally(report_name):
+def download_report_locally(report_name, brands):
     """Download Excel and infer brand + subfolder path."""
     temp_local_path, brand_name = download_excel_from_dropbox(
         dbx,
         ROOT_IMPORT_PATH,
-        report_name
+        report_name,
+        brands
     )
 
     if not temp_local_path:
@@ -121,7 +122,7 @@ def cleanup_temp_file(path):
     except Exception as e:
         print(f"⚠️ Could not delete temp file: {e}")
 
-def process_single_run(report_name, filtered_excel=False):
+def process_single_run(report_name, brands, filtered_excel=False):
     start_time = time.time()
     print(f"🚀 Starting main() process for: {report_name}")
 
@@ -129,7 +130,7 @@ def process_single_run(report_name, filtered_excel=False):
     driver = init_driver_session()
 
     # 2. Download Excel
-    temp_path, brand_name, subfolder_path = download_report_locally(report_name)
+    temp_path, brand_name, subfolder_path = download_report_locally(report_name, brands)
     if not temp_path:
         driver.quit()
         return False
@@ -161,8 +162,8 @@ def process_single_run(report_name, filtered_excel=False):
 
 
 
-def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
-    attempt = 1 if not os.path.exists(failed_files_excel_name) else 2
+def run(report_name, failed_files_excel_name, brands, max_runs=MAX_RUNS):
+    attempt = 1
     all_files_downloaded = False
 
     while not all_files_downloaded and attempt <= MAX_RUNS:
@@ -170,15 +171,16 @@ def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
 
         if attempt > 1:  # Dealing with failed files
             print("Filtering...")
-            apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=attempt)
+            apply_post_attempt_filtering(report_name, failed_files_excel_name,  brands, attempt=attempt)
             print("Filtering complete!")
 
 
         print(f"📊 Running attempt {attempt} out of {max_runs}.\n")
 
-        all_files_downloaded = process_single_run(report_name, filtered_excel=True)
+        all_files_downloaded = process_single_run(report_name, brands, filtered_excel=True)
 
         attempt += 1
+
 
 
     if all_files_downloaded:
@@ -190,3 +192,5 @@ def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
 
 
     print("\n🏁 All done.")
+
+

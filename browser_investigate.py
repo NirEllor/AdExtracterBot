@@ -56,7 +56,7 @@ def login_if_needed(driver):
             driver.refresh()
             time.sleep(5)
             print("✅ Cookies loaded — כנראה כבר מחובר.")
-            return
+            return cookies
         except Exception as e:
             print("⚠️ בעיה בטעינת cookies:", e)
 
@@ -106,6 +106,8 @@ def login_if_needed(driver):
 
         pickle.dump(driver.get_cookies(), open(COOKIES_FILE, "wb"))
         print("✅ התחברות בוצעה בהצלחה וה-cookies נשמרו.")
+        return driver.get_cookies()  # <—— גם להחזיר כאן!
+
     except Exception as e:
         print("❌ שגיאה בהתחברות:", e)
 

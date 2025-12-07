@@ -1,6 +1,7 @@
 import os
 import re
 from xml.etree.ElementTree import ParseError
+
 import openpyxl
 import pandas as pd
 from openpyxl.reader.excel import load_workbook
@@ -45,11 +46,13 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     print(f"skip_rows={skip_rows}, header_row={header_row}, data_start={data_start}")
 
     # Load via pandas to know which IDs to keep
-    df = pd.read_excel(excel_path, skiprows=skip_rows)
     try:
+        df = pd.read_excel(excel_path, skiprows=skip_rows)
         df[column_name] = df[column_name].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
+
         filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
         print(f"🔍 Matches found: {len(filtered_ids)}")
+
         # Load with openpyxl to preserve formulas
         wb = openpyxl.load_workbook(excel_path)
         ws = wb["Report"] if "Report" in wb.sheetnames else wb.active
@@ -75,13 +78,12 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
 
         new_wb.save(excel_path)
         print(f"📝 Filtered file saved: {excel_path}")
-
-    except KeyError as e:
+    except Exception as e:
         print(e)
 
     return excel_path
 
-def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2):
+def apply_post_attempt_filtering(report_name, failed_files_excel_name, brands, attempt=2):
     """
     Applies the filtering logic AFTER attempt #1:
     1. Download original REPORT_FILE from Dropbox
@@ -95,7 +97,8 @@ def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2
     temp_local_path, _ = download_excel_from_dropbox(
         dbx,
         ROOT_IMPORT_PATH,
-        report_name
+        report_name,
+        brands
     )
 
     if not temp_local_path:
@@ -131,18 +134,16 @@ def extract_external_urls(urls, creative_id_set, excel_path, sheet_name, filtere
     try:
         wb = load_workbook(excel_path)
         ws = wb[sheet_name]
-
     except Exception as e:
         print("\n❌ ERROR while loading Excel file:", excel_path)
 
-        # בדיקה אם השגיאה קשורה ל-XML
         if isinstance(e.__cause__, ParseError):
             print("XML ParseError:", str(e.__cause__))
         else:
             print("General exception:", str(e))
 
-        # תרצה כאן return כדי לעצור את העיבוד
         return None
+
     if filtered_excel:
         hidden_rows = {
             row_idx
@@ -187,5 +188,4 @@ def extract_external_urls(urls, creative_id_set, excel_path, sheet_name, filtere
             creative_id_set.add(creative_id.value)
             urls[creative_id.value] = match.group(1)
     print("len of creative_id_set is ", len(creative_id_set))
-    return None
 
