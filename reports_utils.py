@@ -14,9 +14,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 FILES_REPORTS_DETAILED = r"C:\Vivix_Media_Files\Reports_Detailed"
 
-brands = [
-    'breyers',
-]
 
 def to_failed_filename(s: str) -> str:
     prefix = s.split("_", 1)[0]
@@ -99,7 +96,7 @@ def create_report(brand_name: str, headers):
     update_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/UpdateReportSpec'
     # print(f"➡️ Updating report spec → {update_url}")
 
-    update_report_resp = requests.post(update_url, headers=headers, json=payload, verify=False)
+    requests.post(update_url, headers=headers, json=payload, verify=False)
     # print(f"   🔹 Status: {update_report_resp.status_code}")
     # print(f"   🔹 Response: {update_report_resp.text[:400]}")
 
@@ -127,15 +124,15 @@ def create_report(brand_name: str, headers):
 
     print(f"➡️ Running report → {run_url}")
 
-    run_report = requests.post(
+    requests.post(
         run_url,
         headers=headers,
         data=f'reportSpecId={report_spec_id}&action=Run',
         verify=False
     )
 
-    print(f"   🔹 Status: {run_report.status_code}")
-    print(f"   🔹 Response: {run_report.text[:400]}")
+    # print(f"   🔹 Status: {run_report.status_code}")
+    # print(f"   🔹 Response: {run_report.text[:400]}")
 
     print(f"🎉 Finished submitting report for brand: {brand_name}")
     print("======================================\n")
@@ -256,10 +253,10 @@ def get_download_links(brand_names, headers):
             continue
 
         matched += 1
-        print(f"\n✅ MATCH #{matched}")
-        print(f"   • Report ID: {report_id}")
-        print(f"   • Report Name: {report_name}")
-        print(f"   • Status: {status}")
+        # print(f"\n✅ MATCH #{matched}")
+        # print(f"   • Report ID: {report_id}")
+        # print(f"   • Report Name: {report_name}")
+        # print(f"   • Status: {status}")
 
         # Clean brand name by removing the last suffix (usually date/time)
         name = report_name.rsplit(' ', 1)[0]
@@ -392,8 +389,12 @@ def create_reports_batch():
     print("🔥 Cookie injected into HEADERS automatically")
 
     excel, first_brand_row_idx, last_brand_row_idx = get_sliced_excel_with_brands_names()
+    brands = []
     if excel is not None:
+        brands = excel.tolist()
+        print(f"brands are {brands}")
         run_batch(excel, first_brand_row_idx, last_brand_row_idx, headers)
+    return brands
 
 
 if __name__ == '__main__':

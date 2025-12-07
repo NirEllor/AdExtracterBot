@@ -1,5 +1,6 @@
 import os
 import re
+from xml.etree.ElementTree import ParseError
 
 import openpyxl
 import pandas as pd
@@ -45,41 +46,44 @@ def filter_failed_files(excel_path, failed_ids_excel, column_name="MASTER CREATI
     print(f"skip_rows={skip_rows}, header_row={header_row}, data_start={data_start}")
 
     # Load via pandas to know which IDs to keep
-    df = pd.read_excel(excel_path, skiprows=skip_rows)
-    df[column_name] = df[column_name].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
+    try:
+        df = pd.read_excel(excel_path, skiprows=skip_rows)
+        df[column_name] = df[column_name].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
 
-    filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
-    print(f"🔍 Matches found: {len(filtered_ids)}")
+        filtered_ids = set(df[df[column_name].isin(failed_ids)][column_name])
+        print(f"🔍 Matches found: {len(filtered_ids)}")
 
-    # Load with openpyxl to preserve formulas
-    wb = openpyxl.load_workbook(excel_path)
-    ws = wb["Report"] if "Report" in wb.sheetnames else wb.active
+        # Load with openpyxl to preserve formulas
+        wb = openpyxl.load_workbook(excel_path)
+        ws = wb["Report"] if "Report" in wb.sheetnames else wb.active
 
-    new_wb = openpyxl.Workbook()
-    new_ws = new_wb.active
-    new_ws.title = ws.title
+        new_wb = openpyxl.Workbook()
+        new_ws = new_wb.active
+        new_ws.title = ws.title
 
-    # Copy header
-    for cell in ws[header_row]:
-        new_ws.cell(row=1, column=cell.col_idx, value=cell.value)
+        # Copy header
+        for cell in ws[header_row]:
+            new_ws.cell(row=1, column=cell.col_idx, value=cell.value)
 
-    # Copy filtered rows
-    new_row = 2
-    for row in ws.iter_rows(min_row=data_start):
-        raw_value = row[1].value
-        creative_id = str(raw_value).replace(".0", "").strip() if raw_value else ""
+        # Copy filtered rows
+        new_row = 2
+        for row in ws.iter_rows(min_row=data_start):
+            raw_value = row[1].value
+            creative_id = str(raw_value).replace(".0", "").strip() if raw_value else ""
 
-        if creative_id in filtered_ids:
-            for cell in row:
-                new_ws.cell(row=new_row, column=cell.col_idx, value=cell.value)
-            new_row += 1
+            if creative_id in filtered_ids:
+                for cell in row:
+                    new_ws.cell(row=new_row, column=cell.col_idx, value=cell.value)
+                new_row += 1
 
-    new_wb.save(excel_path)
-    print(f"📝 Filtered file saved: {excel_path}")
+        new_wb.save(excel_path)
+        print(f"📝 Filtered file saved: {excel_path}")
+    except Exception as e:
+        print(e)
 
     return excel_path
 
-def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2):
+def apply_post_attempt_filtering(report_name, failed_files_excel_name, brands, attempt=2):
     """
     Applies the filtering logic AFTER attempt #1:
     1. Download original REPORT_FILE from Dropbox
@@ -93,7 +97,8 @@ def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2
     temp_local_path, _ = download_excel_from_dropbox(
         dbx,
         ROOT_IMPORT_PATH,
-        report_name
+        report_name,
+        brands
     )
 
     if not temp_local_path:
@@ -126,8 +131,19 @@ def apply_post_attempt_filtering(report_name, failed_files_excel_name, attempt=2
         print(f"⚠️ Could not remove temp file: {e}")
 
 def extract_external_urls(urls, creative_id_set, excel_path, sheet_name, filtered_excel=False):
-    wb = load_workbook(excel_path)
-    ws = wb[sheet_name]
+    try:
+        wb = load_workbook(excel_path)
+        ws = wb[sheet_name]
+    except Exception as e:
+        print("\n❌ ERROR while loading Excel file:", excel_path)
+
+        if isinstance(e.__cause__, ParseError):
+            print("XML ParseError:", str(e.__cause__))
+        else:
+            print("General exception:", str(e))
+
+        return None
+
     if filtered_excel:
         hidden_rows = {
             row_idx

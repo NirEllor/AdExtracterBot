@@ -2,7 +2,6 @@ import os
 from dropbox.files import WriteMode
 import dropbox
 from config import  ROOT_IMPORT_PATH
-from reports_utils import brands
 
 
 def extract_brand_name_from_filename(file_name, brands_list):
@@ -14,7 +13,7 @@ def extract_brand_name_from_filename(file_name, brands_list):
 
 
 
-def download_excel_from_dropbox(dbx_instance, root_import_path, file_name, temp_dir=None):
+def download_excel_from_dropbox(dbx_instance, root_import_path, file_name, brands, temp_dir=None):
     """
     Downloads an Excel file from Dropbox to a temporary local directory.
 
