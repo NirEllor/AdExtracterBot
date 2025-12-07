@@ -190,3 +190,5 @@ def run(report_name, failed_files_excel_name, max_runs=MAX_RUNS):
 
 
     print("\n🏁 All done.")
+
+

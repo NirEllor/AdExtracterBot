@@ -1,20 +1,21 @@
 import json
-import os
 import time
 from datetime import datetime
-
+from config import ROOT_IMPORT_PATH
+import dropbox
 import pandas as pd
 import requests
-
+from config import dbx
 from browser_investigate import login_if_needed, create_driver
 import urllib3
+from dropbox.files import WriteMode
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 FILES_REPORTS_DETAILED = r"C:\Vivix_Media_Files\Reports_Detailed"
 
 brands = [
-    'starbucks',
+    'breyers',
 ]
 
 def to_failed_filename(s: str) -> str:
@@ -25,7 +26,7 @@ def to_failed_filename(s: str) -> str:
 
 
 
-def create_report(brand_name: str):
+def create_report(brand_name: str, headers):
     print("\n======================================")
     print(f"🚀 Starting full report creation for: {brand_name}")
     print("======================================")
@@ -40,7 +41,7 @@ def create_report(brand_name: str):
 
 
     # Insert brand into payload
-    unique_title = f"{brand_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    unique_title = f"{brand_name}_2024_Yearly_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     payload['Title'] = unique_title
     search_payload['SearchTerm'] = brand_name
@@ -88,26 +89,26 @@ def create_report(brand_name: str):
 
     # Step 1: CreateReportSpec
     create_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/CreateReportSpec'
-    print(f"➡️ Sending CreateReportSpec → {create_url}")
+    # print(f"➡️ Sending CreateReportSpec → {create_url}")
 
-    create_rep = requests.post(create_url, headers=headers, verify=False, json=payload)
-    print(f"   🔹 Status: {create_rep.status_code}")
-    print(f"   🔹 Response: {create_rep.text[:400]}")
+    requests.post(create_url, headers=headers, verify=False, json=payload)
+    # print(f"   🔹 Status: {create_rep.status_code}")
+    # print(f"   🔹 Response: {create_rep.text[:400]}")
 
     # Step 2: UpdateReportSpec
     update_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/UpdateReportSpec'
-    print(f"➡️ Updating report spec → {update_url}")
+    # print(f"➡️ Updating report spec → {update_url}")
 
     update_report_resp = requests.post(update_url, headers=headers, json=payload, verify=False)
-    print(f"   🔹 Status: {update_report_resp.status_code}")
-    print(f"   🔹 Response: {update_report_resp.text[:400]}")
+    # print(f"   🔹 Status: {update_report_resp.status_code}")
+    # print(f"   🔹 Response: {update_report_resp.text[:400]}")
 
     # Step 3: SaveReportSpec
     save_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/SaveReportSpec'
-    print(f"➡️ Saving report spec → {save_url}")
+    # print(f"➡️ Saving report spec → {save_url}")
 
     save_report = requests.post(save_url, headers=headers, data=unique_title, verify=False)
-    print(f"   🔹 Status: {save_report.status_code}")
+    # print(f"   🔹 Status: {save_report.status_code}")
     # print(f"   🔹 Raw Response (reportSpecId): {save_report.text}")
 
     report_spec_id = save_report.text.strip()
@@ -142,19 +143,19 @@ def create_report(brand_name: str):
     return report_spec_id
 
 
-def check_reports_status():
+def check_reports_status(headers):
     print("\n====================================")
     print("🔍 Checking report statuses...")
     print("====================================")
 
     # Get current reports
-    print("➡️ Sending request to GetReportListData...")
+    # print("➡️ Sending request to GetReportListData...")
     get_reports = requests.get(
         'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/CustomReporting/GetReportListData?mode=FullView',
         headers=headers, data='FullView', verify=False
     )
 
-    print(f"   🔹 HTTP Status: {get_reports.status_code}")
+    # print(f"   🔹 HTTP Status: {get_reports.status_code}")
 
     if get_reports.status_code != 200:
         print("❌ Failed to fetch report list!")
@@ -187,11 +188,11 @@ def check_reports_status():
     print("✅ All reports completed successfully!\n")
     return True
 
-def create_multiple_reps(brands_excel, start, end):
+def create_reports(brands_excel, start, end, headers):
     print('Creating reports')
     for brand in brands_excel[start:end]:
         try:
-            report_spec_idv = create_report(brand)
+            report_spec_idv = create_report(brand, headers)
             print(f"report {report_spec_idv} for brand {brand}")
         except Exception as e:
             print(e)
@@ -199,17 +200,17 @@ def create_multiple_reps(brands_excel, start, end):
     # Wait until reports are completed
     print('Reports created, waiting for reports to run')
 
-    finished_creating = check_reports_status()
+    finished_creating = check_reports_status(headers)
     while not finished_creating:
         print(f"finish_creating is {finished_creating}, sleeping and running again")
         time.sleep(60)
         print("running again")
-        finished_creating = check_reports_status()
+        finished_creating = check_reports_status(headers)
     return finished_creating
 
 
 # Gets download link of reports created
-def get_download_links(brand_names):
+def get_download_links(brand_names, headers):
     print("\n====================================")
     print("🔍 Fetching download links for brands:")
     for b in brand_names:
@@ -286,52 +287,47 @@ def get_download_links(brand_names):
 
 
 
-
-def download_reports(brands_excel, start, end, path):
+def download_reports(brands_excel, start, end, headers):
     print("\n============================")
     print(f"📥 Starting download for brands[{start}:{end}]")
     print("============================")
 
-    links = get_download_links(brands_excel[start:end])
+    links = get_download_links(brands_excel[start:end], headers)
     print(f"🔍 Found {len(links)} completed reports in Vivvix.")
 
     if not links:
         print("⚠️ No reports found. Skipping download.\n")
         return
 
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    print("\n📥 Downloading reports:")
+    print("\n📥 Downloading and uploading XLSX files to Dropbox:")
 
     for item in links:
         brand = item["Brand"].replace("*", "").strip()
-        xlsx_url = item["XLSX"]   # ← שדה חדש
+        xlsx_url = item["XLSX"]
 
         print(f"\n➡️ Processing brand: {brand}")
-
-        download_path = os.path.join(path, brand)
-
-        os.makedirs(download_path, exist_ok=True)
+        print(f"   📄 Downloading XLSX from: {xlsx_url}")
 
         try:
-            print(f"   📄 Downloading XLSX from {xlsx_url} ...")
             response = requests.get(xlsx_url)
-
             response.raise_for_status()
 
-            brand_clean = str(brand)
-            file_path = os.path.join(str(download_path), f"{str(brand_clean)}.xlsx")
+            dropbox_file_path = f"{ROOT_IMPORT_PATH}/{brand}.xlsx"
 
-            with open(file_path, "wb") as f:
-                f.write(response.content)
+            print(f"   ⬆️ Uploading to Dropbox: {dropbox_file_path}")
 
-            print(f"   ✅ Saved Excel: {file_path}")
+            dbx.files_upload(
+                response.content,
+                dropbox_file_path,
+                mode=dropbox.files.WriteMode("overwrite")
+            )
+
+            print(f"   ✅ Uploaded to Dropbox: {dropbox_file_path}")
 
         except Exception as e:
-            print(f"   ❌ Failed to download XLSX for brand '{brand}': {e}")
+            print(f"   ❌ Failed to process '{brand}': {e}")
 
-    print("\n🎉 All downloads completed!")
+    print("\n🎉 All Dropbox uploads completed!")
     print("============================\n")
 
 def get_sliced_excel_with_brands_names():
@@ -349,7 +345,7 @@ def get_sliced_excel_with_brands_names():
 
 
 # Runs the whole process at once
-def run_batch(brands_excel, start, end, download_path):
+def run_batch(brands_excel, start, end, headers):
     print("\n============================")
     print(f"🚀 Running batch: brands[{start}:{end}]")
     print("============================")
@@ -362,13 +358,13 @@ def run_batch(brands_excel, start, end, download_path):
         print(f"   • {b}")
 
     print("\n🛠️ Step 1: Creating reports...")
-    status = create_multiple_reps(brands_excel, start, end)
+    status = create_reports(brands_excel, start, end, headers)
     if status == 2:
         return None
     print("✅ Finished creating report specs.\n") if status else print("Not yet...")
 
     print("🛠️ Step 2: Searching for completed reports...")
-    links = get_download_links(brands_excel[start:end])
+    links = get_download_links(brands_excel[start:end], headers)
 
     print(f"📄 Found {len(links)} completed reports ready for download.")
 
@@ -377,13 +373,12 @@ def run_batch(brands_excel, start, end, download_path):
         return
 
     print("\n🛠️ Step 3: Downloading reports")
-    download_reports(brands_excel, start, end, download_path)
+    download_reports(brands_excel, start, end, headers)
 
     print(f"🎉 Batch completed successfully for brands[{start}:{end}]")
     print("============================\n")
 
-
-if __name__ == '__main__':
+def create_reports_batch():
     driver = create_driver()
     cookies = login_if_needed(driver)
 
@@ -397,10 +392,9 @@ if __name__ == '__main__':
     print("🔥 Cookie injected into HEADERS automatically")
 
     excel, first_brand_row_idx, last_brand_row_idx = get_sliced_excel_with_brands_names()
-
-
-    # links = get_download_links(brands_excel[first_brand_row_idx:last_brand_row_idx])
-    # download_reports(first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED)
-    # check_reports_status()
     if excel is not None:
-        run_batch(excel, first_brand_row_idx, last_brand_row_idx, FILES_REPORTS_DETAILED)
+        run_batch(excel, first_brand_row_idx, last_brand_row_idx, headers)
+
+
+if __name__ == '__main__':
+    create_reports_batch()
