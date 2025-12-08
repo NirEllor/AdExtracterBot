@@ -239,7 +239,7 @@
     {
       "FromDate": "2024-01-01T21:00:00.000Z",
       "ToDate": "2024-12-31T21:00:00.000Z",
-      "StaticTimePeriodType": 4,
+      "StaticTimePeriodType": 5,
       "Description": "2024 Weekly",
       "IsSelected": false,
       "FromDateString": "2024-01-01",

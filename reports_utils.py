@@ -208,8 +208,9 @@ def create_reports(brands_excel, start, end, headers, create_detailed_reports=Fa
         time.sleep(60)
         print("running again")
         finished_creating = check_reports_status(headers)
-    df = pd.DataFrame(brands_not_found)
-    df.to_excel("brands_not_found_in_vivix.xlsx", index=False, header=False)
+    if brands_not_found:
+        df = pd.DataFrame(brands_not_found)
+        df.to_excel("brands_not_found_in_vivix.xlsx", index=False, header=False)
     return finished_creating
 
 
