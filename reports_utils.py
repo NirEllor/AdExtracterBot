@@ -1,7 +1,7 @@
 import json
 import time
 from datetime import datetime
-from config import ROOT_IMPORT_PATH
+from config import ROOT_IMPORT_PATH, ROOT_IMPORT_PATH_DETAILED_REPORTS
 import dropbox
 import pandas as pd
 import requests
@@ -9,6 +9,10 @@ from config import dbx
 from browser_investigate import login_if_needed, create_driver
 import urllib3
 from dropbox.files import WriteMode
+
+PAYLOAD_NON_DETAILED_REPORT = 'non_detailed_reports_payload.json'
+PAYLOAD_DETAILED_REPORT = 'detailed_reports_payload.json'
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -20,17 +24,15 @@ def to_failed_filename(s: str) -> str:
     return prefix + "_failed_to_download.xlsx"
 
 
-
-
-
-def create_report(brand_name: str, headers):
+def create_report(brand_name: str, headers, create_detailed_reports=False):
     print("\n======================================")
     print(f"🚀 Starting full report creation for: {brand_name}")
     print("======================================")
 
     # Load payload template
     print("📄 Loading payload template...")
-    with open('creatives_payload.json') as creatives_payload_file:
+    with (open(PAYLOAD_DETAILED_REPORT if create_detailed_reports else PAYLOAD_NON_DETAILED_REPORT)
+          as creatives_payload_file):
         payload = json.load(creatives_payload_file)
 
     with open("search_payload.json", "r", encoding="utf-8") as search_payload_file:
@@ -38,7 +40,8 @@ def create_report(brand_name: str, headers):
 
 
     # Insert brand into payload
-    unique_title = f"{brand_name}_2024_Yearly_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    mode = "Weekly" if create_detailed_reports else "Yearly"
+    unique_title = f"{brand_name}_2024_{mode}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     payload['Title'] = unique_title
     search_payload['SearchTerm'] = brand_name
@@ -185,12 +188,14 @@ def check_reports_status(headers):
     print("✅ All reports completed successfully!\n")
     return True
 
-def create_reports(brands_excel, start, end, headers):
+def create_reports(brands_excel, start, end, headers, create_detailed_reports=False):
+    brands_not_found = []
     print('Creating reports')
     for brand in brands_excel[start:end]:
         try:
-            report_spec_idv = create_report(brand, headers)
+            report_spec_idv = create_report(brand, headers, create_detailed_reports)
             print(f"report {report_spec_idv} for brand {brand}")
+            brands_not_found.append(report_spec_idv) if not report_spec_idv else None
         except Exception as e:
             print(e)
 
@@ -203,6 +208,8 @@ def create_reports(brands_excel, start, end, headers):
         time.sleep(60)
         print("running again")
         finished_creating = check_reports_status(headers)
+    df = pd.DataFrame(brands_not_found)
+    df.to_excel("brands_not_found_in_vivix.xlsx", index=False, header=False)
     return finished_creating
 
 
@@ -284,7 +291,7 @@ def get_download_links(brand_names, headers):
 
 
 
-def download_reports(brands_excel, start, end, headers):
+def download_reports(brands_excel, start, end, headers, create_detailed_reports=False):
     print("\n============================")
     print(f"📥 Starting download for brands[{start}:{end}]")
     print("============================")
@@ -309,7 +316,7 @@ def download_reports(brands_excel, start, end, headers):
             response = requests.get(xlsx_url)
             response.raise_for_status()
 
-            dropbox_file_path = f"{ROOT_IMPORT_PATH}/{brand}.xlsx"
+            dropbox_file_path = f"{ROOT_IMPORT_PATH_DETAILED_REPORTS if create_detailed_reports else ROOT_IMPORT_PATH}/{brand}.xlsx"
 
             print(f"   ⬆️ Uploading to Dropbox: {dropbox_file_path}")
 
@@ -342,7 +349,7 @@ def get_sliced_excel_with_brands_names():
 
 
 # Runs the whole process at once
-def run_batch(brands_excel, start, end, headers):
+def run_batch(brands_excel, start, end, headers, create_detailed_reports=False):
     print("\n============================")
     print(f"🚀 Running batch: brands[{start}:{end}]")
     print("============================")
@@ -355,7 +362,7 @@ def run_batch(brands_excel, start, end, headers):
         print(f"   • {b}")
 
     print("\n🛠️ Step 1: Creating reports...")
-    status = create_reports(brands_excel, start, end, headers)
+    status = create_reports(brands_excel, start, end, headers, create_detailed_reports)
     if status == 2:
         return None
     print("✅ Finished creating report specs.\n") if status else print("Not yet...")
@@ -370,12 +377,12 @@ def run_batch(brands_excel, start, end, headers):
         return
 
     print("\n🛠️ Step 3: Downloading reports")
-    download_reports(brands_excel, start, end, headers)
+    download_reports(brands_excel, start, end, headers, create_detailed_reports)
 
     print(f"🎉 Batch completed successfully for brands[{start}:{end}]")
     print("============================\n")
 
-def create_reports_batch():
+def create_reports_batch(create_detailed_reports=False):
     driver = create_driver()
     cookies = login_if_needed(driver)
 
@@ -393,7 +400,7 @@ def create_reports_batch():
     if excel is not None:
         brands = excel.tolist()
         print(f"brands are {brands}")
-        run_batch(excel, first_brand_row_idx, last_brand_row_idx, headers)
+        run_batch(excel, first_brand_row_idx, last_brand_row_idx, headers, create_detailed_reports)
     return brands
 
 
