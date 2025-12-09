@@ -11,8 +11,8 @@ def extract_ads_batch(brands):
 
 
 def main():
-    brands = create_reports_batch(create_detailed_reports=False)  # For adExtractorBot
-    extract_ads_batch(brands)
+    # brands = create_reports_batch(create_detailed_reports=False)  # For adExtractorBot
+    # extract_ads_batch(brands)
     create_reports_batch(create_detailed_reports=True)
 
 
