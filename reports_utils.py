@@ -50,7 +50,7 @@ def create_report(brand_name: str, headers, create_detailed_reports=False):
 
     # Search brand entity
     search_url = 'https://app.vivvix.com/360/KMI/IntelliDrive/ApplUI/api/Entity/EntitySearch'
-    brand_search = requests.post(
+    response = brand_search = requests.post(
         search_url,
         headers=headers,
         json=search_payload,
@@ -58,6 +58,7 @@ def create_report(brand_name: str, headers, create_detailed_reports=False):
     ).content
 
     # Parse results
+    print(response)
     try:
         brand_res = json.loads(brand_search.decode('utf-8'))['Results']
     except Exception as e:
@@ -248,45 +249,50 @@ def get_download_links(brand_names, headers):
 
     matched = 0
     for key in reports:
-        report_name = key['ReportName']
-        status = key['Status']
-        report_id = key['ReportId']
+        try:
+            report_name = key['ReportName']
+            status = key['Status']
+            report_id = key['ReportId']
 
-        # Condition 1: only completed reports
-        if status != 2:
-            continue
+            # Condition 1: only completed reports
+            if status != 2:
+                continue
 
-        # Condition 2: match by substring to any brand
-        if not any(map(report_name.__contains__, brand_names)):
-            continue
+            # Condition 2: match by substring to any brand
+            if not any(map(report_name.__contains__, brand_names)):
+                continue
 
-        matched += 1
-        # print(f"\n✅ MATCH #{matched}")
-        # print(f"   • Report ID: {report_id}")
-        # print(f"   • Report Name: {report_name}")
-        # print(f"   • Status: {status}")
+            matched += 1
+            # print(f"\n✅ MATCH #{matched}")
+            # print(f"   • Report ID: {report_id}")
+            # print(f"   • Report Name: {report_name}")
+            # print(f"   • Status: {status}")
 
-        # Clean brand name by removing the last suffix (usually date/time)
-        name = report_name.rsplit(' ', 1)[0]
-        print(f"   • Extracted brand name: {name}")
+            # Clean brand name by removing the last suffix (usually date/time)
+            name = report_name.rsplit(' ', 1)[0]
+            print(f"   • Extracted brand name: {name}")
 
-        # Build download URLs
-        excel_link = key['ReportOutputs'][1]['FullFilePath']
+            # Build download URLs
 
+            excel_link = key['ReportOutputs'][1]['FullFilePath']
 
-        print(f"   • CSV/Excel file link: {excel_link}")
+            print(f"   • CSV/Excel file link: {excel_link}")
 
-        links.append({
-            'XLSX': excel_link,
-            'reportID': report_id,
-            'Brand': name
-        })
+            links.append({
+                'XLSX': excel_link,
+                'reportID': report_id,
+                'Brand': name
+            })
 
-    if matched == 0:
-        print("❌ No completed reports matched your brand list.")
+            if matched == 0:
+                print("❌ No completed reports matched your brand list.")
 
-    print("\n📦 Final: Found", matched, "matching downloadable reports.")
-    print("====================================\n")
+            print("\n📦 Final: Found", matched, "matching downloadable reports.")
+            print("====================================\n")
+        except IndexError as e:
+            print(f"{e} - over 100K ads, vivix only produces CSV")
+        except Exception as e:
+            print(f"other Exception: {e}")
 
     return links
 
@@ -363,10 +369,10 @@ def run_batch(brands_excel, start, end, headers, create_detailed_reports=False):
         print(f"   • {b}")
 
     print("\n🛠️ Step 1: Creating reports...")
-    status = create_reports(brands_excel, start, end, headers, create_detailed_reports)
-    if status == 2:
-        return None
-    print("✅ Finished creating report specs.\n") if status else print("Not yet...")
+    # status = create_reports(brands_excel, start, end, headers, create_detailed_reports)
+    # if status == 2:
+    #     return None
+    # print("✅ Finished creating report specs.\n") if status else print("Not yet...")
 
     print("🛠️ Step 2: Searching for completed reports...")
     links = get_download_links(brands_excel[start:end], headers)
