@@ -1,0 +1,750 @@
+{
+  "SelectedSorts": {
+    "SetId": -1,
+    "SortsList": [
+          {
+        "SortType": 301,
+        "Description": "Media",
+        "SelectionOrder": 1,
+        "DisplayOrderWithinSection": 1,
+        "SortSection": 3,
+        "IsSelectable": true,
+        "IsConditionallySelectable": true,
+        "IsDetailSort": true
+      },
+          {
+        "SortType": 460,
+        "Description": "Creative",
+        "SelectionOrder": 2,
+        "DisplayOrderWithinSection": 1,
+        "SortSection": 1,
+        "IsSelectable": true,
+        "IsConditionallySelectable": true,
+        "IsDetailSort": true
+      },
+      {
+        "SortType": 322,
+        "Description": "Master Creative ID",
+        "SelectionOrder": 3,
+        "DisplayOrderWithinSection": 3,
+        "SortSection": 1,
+        "IsSelectableSort": true,
+        "IsSelectable": true,
+        "IsSubtotalHidden": false
+      },
+      {
+        "SortType": 438,
+        "Description": "Detail Creative ID",
+        "SelectionOrder": 4,
+        "DisplayOrderWithinSection": 3,
+        "SortSection": 1,
+        "IsSelectableSort": true,
+        "IsSelectable": true,
+        "IsSubtotalHidden": false
+      },
+      {
+        "SortType": 321,
+        "Description": "Parent Creative ID",
+        "SelectionOrder": 5,
+        "DisplayOrderWithinSection": 3,
+        "SortSection": 1,
+        "IsSelectableSort": true,
+        "IsSelectable": true,
+        "IsSubtotalHidden": false
+      },
+      {
+        "SortType": 118,
+        "Description": "Advertiser",
+        "SelectionOrder": 6,
+        "DisplayOrderWithinSection": 3,
+        "SortSection": 1,
+        "IsSelectableSort": true,
+        "IsSelectable": true,
+        "IsSubtotalHidden": false
+      },
+      {
+        "SortType": 100,
+        "Description": "Product",
+        "SelectionOrder": 7,
+        "DisplayOrderWithinSection": 3,
+        "SortSection": 1,
+        "IsSelectableSort": true,
+        "IsSelectable": true,
+        "IsSubtotalHidden": false
+      }
+    ],
+    "IncludeSubtotalsForSingleRecords": false,
+    "IncludeGrandTotalAtTheTop": false,
+    "IncludeState": false,
+    "IncludeStateAllowed": false,
+    "IncludeStateMessage": "",
+    "IncludeCategoryCode": false,
+    "IncludeCategoryCodeAllowed": false,
+    "IncludeCategoryCodeMessage": "",
+    "IncludeMediatorRole": false,
+    "IncludeMediatorRoleAllowed": false,
+    "IncludeMediatorRoleMessage": "",
+    "NotShowConditionalSortSelectPopup": false,
+    "LastSort": 118,
+    "IncludeSubtotalsForSingleRecordsDesc": "Include Subtotals for Single Records: No",
+    "IncludeSubtotalsForSortsByDefault": false
+  },
+  "SelectedMedia": {
+    "SetId": -1,
+    "MediaList": [],
+    "LocallyClearedMediaList": [],
+    "AllMediaAreSelected": true,
+    "LocallyClearedChecked": false,
+    "IncludeHouseAds": false,
+    "IsIncludeHouseAdsOptionApplicable": true
+  },
+  "SelectedPivotColumn": {
+    "PivotColumnId": -1,
+    "PivotColumnValue": 0,
+    "Description": "Pivot Export",
+    "DisplayOrder": 2,
+    "HasAssociatedSort": false,
+    "IsMediaSpecific": false,
+    "AssociatedSort": 0,
+    "IsHidden": false,
+    "IsForNonPivotedReports": true,
+    "IsComparisonReportColumn": false,
+    "DescriptionDetailMessage": ""
+  },
+  "SearchTerm": "casio",
+  "SearchType": 4,
+  "Take": 250,
+  "Skip": 0,
+  "Page": 0,
+  "PageSize": 0,
+  "EntitySet": {
+    "EntitySetId": 10,
+    "Name": "ReportSpecBC",
+    "EntitySetType": 10,
+    "Entities": [],
+    "IsActive": true,
+    "AllEntitiesAreSelected": false
+  },
+  "IncludePropertyStartDate": false,
+  "EntityTypes": [
+    139
+  ],
+  "CategoryCodeEnabled": false,
+  "SortByAlpha": false,
+  "ExcludedSearchEntityItems": [
+    {
+      "EntityItemId": 522,
+      "Seq": 0,
+      "EntityName": null,
+      "EntityLongName": null,
+      "EntityCode": null,
+      "EntityNameWithGroupCount": null,
+      "GroupName": "",
+      "IsOwnedByMe": false,
+      "GroupEntityItemId": null,
+      "ISAdvEntityType": false,
+      "ISCatEntityType": true,
+      "EntityItemTypeDisplay": "Category",
+      "IsAGroup": false,
+      "BelongsToGroup": false,
+      "NumberOfItemsInGroup": 0,
+      "StartDateAsString": null,
+      "Media": 0,
+      "MediaType": 0,
+      "MarketId": 0,
+      "IsEntitySelected": false,
+      "IsEntitySelectable": false,
+      "IsEntityForcedSelected": false,
+      "EntityForcedSelectedReason": null,
+      "DisplayOrder": 0,
+      "StateName": null,
+      "DMARank": 0,
+      "BrandCategoryEntityTypeDisplayOrder": 0,
+      "ProgramEntityTypeDisplayOrder": 0,
+      "ShowGroupMembersOnReport": false,
+      "CanBeDeletedFromSystem": false,
+      "ShowGroupMembersDesc": "",
+      "UniqueId": "103_0",
+      "GroupedEntities": null,
+      "SharedEntity": null,
+      "IsExclude": false,
+      "PropertyAbbreviation": null,
+      "PropertyStartDate": null,
+      "PropertyEndDate": null,
+      "PropertyStartDateAsString": null,
+      "PropertyEndDateAsString": null,
+      "EntityId": 0,
+      "EntityType": 103
+    }
+  ],
+  "HideSummaryMediaItems": false,
+  "BrandCentralSelections": {
+    "EntitySetId": -1,
+    "Name": "Untitled Product Set",
+    "EntitySetType": 10,
+    "Entities": [
+      {
+        "EntityItemId": -1,
+        "Seq": 0,
+        "EntityName": "Casio",
+        "EntityLongName": null,
+        "EntityCode": "",
+        "EntityNameWithGroupCount": "Casio",
+        "GroupName": "",
+        "IsOwnedByMe": false,
+        "GroupEntityItemId": null,
+        "ISAdvEntityType": true,
+        "ISCatEntityType": false,
+        "EntityItemTypeDisplay": "Brand",
+        "IsAGroup": false,
+        "BelongsToGroup": false,
+        "NumberOfItemsInGroup": 0,
+        "StartDateAsString": null,
+        "Media": 0,
+        "MediaType": 0,
+        "MarketId": 0,
+        "IsEntitySelected": false,
+        "IsEntitySelectable": false,
+        "IsEntityForcedSelected": false,
+        "EntityForcedSelectedReason": null,
+        "DisplayOrder": 0,
+        "StateName": null,
+        "DMARank": 0,
+        "BrandCategoryEntityTypeDisplayOrder": 0,
+        "ProgramEntityTypeDisplayOrder": 0,
+        "ShowGroupMembersOnReport": false,
+        "CanBeDeletedFromSystem": false,
+        "ShowGroupMembersDesc": "",
+        "UniqueId": "139_100432",
+        "GroupedEntities": [],
+        "SharedEntity": null,
+        "IsExclude": false,
+        "PropertyAbbreviation": null,
+        "PropertyStartDate": null,
+        "PropertyEndDate": null,
+        "PropertyStartDateAsString": null,
+        "PropertyEndDateAsString": null,
+        "EntityId": 100432,
+        "EntityType": 139,
+        "Selected": false,
+        "Disabled": false
+      }
+    ],
+    "IsActive": false,
+    "AllEntitiesAreSelected": false
+  },
+"SelectedTimePeriods": {
+  "SetId": -1,
+  "TimePeriods": [
+    {
+      "FromDate": "2023-12-31T22:00:00.000Z",
+      "ToDate": "2024-01-06T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-01-01",
+      "ToDateString": "2024-01-07"
+    },
+    {
+      "FromDate": "2024-01-07T22:00:00.000Z",
+      "ToDate": "2024-01-13T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-01-08",
+      "ToDateString": "2024-01-14"
+    },
+    {
+      "FromDate": "2024-01-14T22:00:00.000Z",
+      "ToDate": "2024-01-20T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-01-15",
+      "ToDateString": "2024-01-21"
+    },
+    {
+      "FromDate": "2024-01-21T22:00:00.000Z",
+      "ToDate": "2024-01-27T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-01-22",
+      "ToDateString": "2024-01-28"
+    },
+    {
+      "FromDate": "2024-01-28T22:00:00.000Z",
+      "ToDate": "2024-02-03T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-01-29",
+      "ToDateString": "2024-02-04"
+    },
+    {
+      "FromDate": "2024-02-04T22:00:00.000Z",
+      "ToDate": "2024-02-10T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-02-05",
+      "ToDateString": "2024-02-11"
+    },
+    {
+      "FromDate": "2024-02-11T22:00:00.000Z",
+      "ToDate": "2024-02-17T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-02-12",
+      "ToDateString": "2024-02-18"
+    },
+    {
+      "FromDate": "2024-02-18T22:00:00.000Z",
+      "ToDate": "2024-02-24T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-02-19",
+      "ToDateString": "2024-02-25"
+    },
+    {
+      "FromDate": "2024-02-25T22:00:00.000Z",
+      "ToDate": "2024-03-02T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-02-26",
+      "ToDateString": "2024-03-03"
+    },
+    {
+      "FromDate": "2024-03-03T22:00:00.000Z",
+      "ToDate": "2024-03-09T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-03-04",
+      "ToDateString": "2024-03-10"
+    },
+    {
+      "FromDate": "2024-03-10T22:00:00.000Z",
+      "ToDate": "2024-03-16T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-03-11",
+      "ToDateString": "2024-03-17"
+    },
+    {
+      "FromDate": "2024-03-17T22:00:00.000Z",
+      "ToDate": "2024-03-23T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-03-18",
+      "ToDateString": "2024-03-24"
+    },
+    {
+      "FromDate": "2024-03-24T22:00:00.000Z",
+      "ToDate": "2024-03-30T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-03-25",
+      "ToDateString": "2024-03-31"
+    },
+    {
+      "FromDate": "2024-03-31T21:00:00.000Z",
+      "ToDate": "2024-04-06T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-04-01",
+      "ToDateString": "2024-04-07"
+    },
+    {
+      "FromDate": "2024-04-07T21:00:00.000Z",
+      "ToDate": "2024-04-13T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-04-08",
+      "ToDateString": "2024-04-14"
+    },
+    {
+      "FromDate": "2024-04-14T21:00:00.000Z",
+      "ToDate": "2024-04-20T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-04-15",
+      "ToDateString": "2024-04-21"
+    },
+    {
+      "FromDate": "2024-04-21T21:00:00.000Z",
+      "ToDate": "2024-04-27T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-04-22",
+      "ToDateString": "2024-04-28"
+    },
+    {
+      "FromDate": "2024-04-28T21:00:00.000Z",
+      "ToDate": "2024-05-04T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-04-29",
+      "ToDateString": "2024-05-05"
+    },
+    {
+      "FromDate": "2024-05-05T21:00:00.000Z",
+      "ToDate": "2024-05-11T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-05-06",
+      "ToDateString": "2024-05-12"
+    },
+    {
+      "FromDate": "2024-05-12T21:00:00.000Z",
+      "ToDate": "2024-05-18T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-05-13",
+      "ToDateString": "2024-05-19"
+    },
+    {
+      "FromDate": "2024-05-19T21:00:00.000Z",
+      "ToDate": "2024-05-25T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-05-20",
+      "ToDateString": "2024-05-26"
+    },
+    {
+      "FromDate": "2024-05-26T21:00:00.000Z",
+      "ToDate": "2024-06-01T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-05-27",
+      "ToDateString": "2024-06-02"
+    },
+    {
+      "FromDate": "2024-06-02T21:00:00.000Z",
+      "ToDate": "2024-06-08T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-06-03",
+      "ToDateString": "2024-06-09"
+    },
+    {
+      "FromDate": "2024-06-09T21:00:00.000Z",
+      "ToDate": "2024-06-15T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-06-10",
+      "ToDateString": "2024-06-16"
+    },
+    {
+      "FromDate": "2024-06-16T21:00:00.000Z",
+      "ToDate": "2024-06-22T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-06-17",
+      "ToDateString": "2024-06-23"
+    },
+    {
+      "FromDate": "2024-06-23T21:00:00.000Z",
+      "ToDate": "2024-06-29T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-06-24",
+      "ToDateString": "2024-06-30"
+    },
+    {
+      "FromDate": "2024-06-30T21:00:00.000Z",
+      "ToDate": "2024-07-06T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-07-01",
+      "ToDateString": "2024-07-07"
+    },
+    {
+      "FromDate": "2024-07-07T21:00:00.000Z",
+      "ToDate": "2024-07-13T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-07-08",
+      "ToDateString": "2024-07-14"
+    },
+    {
+      "FromDate": "2024-07-14T21:00:00.000Z",
+      "ToDate": "2024-07-20T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-07-15",
+      "ToDateString": "2024-07-21"
+    },
+    {
+      "FromDate": "2024-07-21T21:00:00.000Z",
+      "ToDate": "2024-07-27T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-07-22",
+      "ToDateString": "2024-07-28"
+    },
+    {
+      "FromDate": "2024-07-28T21:00:00.000Z",
+      "ToDate": "2024-08-03T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-07-29",
+      "ToDateString": "2024-08-04"
+    },
+    {
+      "FromDate": "2024-08-04T21:00:00.000Z",
+      "ToDate": "2024-08-10T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-08-05",
+      "ToDateString": "2024-08-11"
+    },
+    {
+      "FromDate": "2024-08-11T21:00:00.000Z",
+      "ToDate": "2024-08-17T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-08-12",
+      "ToDateString": "2024-08-18"
+    },
+    {
+      "FromDate": "2024-08-18T21:00:00.000Z",
+      "ToDate": "2024-08-24T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-08-19",
+      "ToDateString": "2024-08-25"
+    },
+    {
+      "FromDate": "2024-08-25T21:00:00.000Z",
+      "ToDate": "2024-08-31T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-08-26",
+      "ToDateString": "2024-09-01"
+    },
+    {
+      "FromDate": "2024-09-01T21:00:00.000Z",
+      "ToDate": "2024-09-07T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-09-02",
+      "ToDateString": "2024-09-08"
+    },
+    {
+      "FromDate": "2024-09-08T21:00:00.000Z",
+      "ToDate": "2024-09-14T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-09-09",
+      "ToDateString": "2024-09-15"
+    },
+    {
+      "FromDate": "2024-09-15T21:00:00.000Z",
+      "ToDate": "2024-09-21T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-09-16",
+      "ToDateString": "2024-09-22"
+    },
+    {
+      "FromDate": "2024-09-22T21:00:00.000Z",
+      "ToDate": "2024-09-28T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-09-23",
+      "ToDateString": "2024-09-29"
+    },
+    {
+      "FromDate": "2024-09-29T21:00:00.000Z",
+      "ToDate": "2024-10-05T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-09-30",
+      "ToDateString": "2024-10-06"
+    },
+    {
+      "FromDate": "2024-10-06T21:00:00.000Z",
+      "ToDate": "2024-10-12T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-10-07",
+      "ToDateString": "2024-10-13"
+    },
+    {
+      "FromDate": "2024-10-13T21:00:00.000Z",
+      "ToDate": "2024-10-19T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-10-14",
+      "ToDateString": "2024-10-20"
+    },
+    {
+      "FromDate": "2024-10-20T21:00:00.000Z",
+      "ToDate": "2024-10-26T21:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-10-21",
+      "ToDateString": "2024-10-27"
+    },
+    {
+      "FromDate": "2024-10-27T22:00:00.000Z",
+      "ToDate": "2024-11-02T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-10-28",
+      "ToDateString": "2024-11-03"
+    },
+    {
+      "FromDate": "2024-11-03T22:00:00.000Z",
+      "ToDate": "2024-11-09T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-11-04",
+      "ToDateString": "2024-11-10"
+    },
+    {
+      "FromDate": "2024-11-10T22:00:00.000Z",
+      "ToDate": "2024-11-16T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-11-11",
+      "ToDateString": "2024-11-17"
+    },
+    {
+      "FromDate": "2024-11-17T22:00:00.000Z",
+      "ToDate": "2024-11-23T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-11-18",
+      "ToDateString": "2024-11-24"
+    },
+    {
+      "FromDate": "2024-11-24T22:00:00.000Z",
+      "ToDate": "2024-11-30T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-11-25",
+      "ToDateString": "2024-12-01"
+    },
+    {
+      "FromDate": "2024-12-01T22:00:00.000Z",
+      "ToDate": "2024-12-07T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-12-02",
+      "ToDateString": "2024-12-08"
+    },
+    {
+      "FromDate": "2024-12-08T22:00:00.000Z",
+      "ToDate": "2024-12-14T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-12-09",
+      "ToDateString": "2024-12-15"
+    },
+    {
+      "FromDate": "2024-12-15T22:00:00.000Z",
+      "ToDate": "2024-12-21T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-12-16",
+      "ToDateString": "2024-12-22"
+    },
+    {
+      "FromDate": "2024-12-22T22:00:00.000Z",
+      "ToDate": "2024-12-28T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-12-23",
+      "ToDateString": "2024-12-29"
+    },
+    {
+      "FromDate": "2024-12-29T22:00:00.000Z",
+      "ToDate": "2025-01-04T22:00:00.000Z",
+      "StaticTimePeriodType": 2,
+      "Description": "",
+      "IsSelected": false,
+      "FromDateString": "2024-12-30",
+      "ToDateString": "2025-01-05"
+    }
+  ],
+  "StaticTimePeriods": [    ],
+  "DynamicTimePeriods": [],
+  "CalendarType": 1,
+  "CalendarTypeDescr": "Broadcast Calendar",
+  "OnlyCompleteTimePeriodsAreValid": true,
+  "CompleteTimePeriodsMessage": "Only include time periods for which complete data is available: Yes",
+  "IncludesMixedTimePeriods": false,
+  "IsTrimRightTimePeriodsSetApplicable": false,
+  "IsTrimRightTimePeriodsSet": false,
+  "TrimRightTimePeriodsMessage": "",
+  "IncludePartialTVData": false,
+  "CurrentComparisonTimePeriod": 0,
+  "CurrentComparisonTimePeriodStartDate": "0001-01-01T00:00:00-05:00",
+  "CurrentComparisonTimePeriodEndDate": "0001-01-01T00:00:00-05:00",
+  "CurrentComparisonTimePeriodStartDateAsString": "",
+  "CurrentComparisonTimePeriodEndDateAsString": "",
+  "ComparisonMode": 0,
+  "PreviousComparisonTimePeriodStartDate": "0001-01-01T00:00:00-05:00",
+  "PreviousComparisonTimePeriodEndDate": "0001-01-01T00:00:00-05:00",
+  "PreviousComparisonTimePeriodStartDateAsString": "",
+  "PreviousComparisonTimePeriodEndDateAsString": "",
+  "CurrentComparisonTimePeriodDescription": "0",
+  "PreviousComparisonTimePeriodDescription": "No comparison",
+  "UseFinalDataOnly": false,
+  "_useFinalDataOnlyMessage": "Include Preliminary Data",
+  "_useFinalDataOnlyMessageForResultInfo": "Includes Preliminary Data",
+  "IsReportResultInfo": false,
+  "UseFinalDataOnlyMessage": "Include Preliminary Data",
+  "IncludeOnlyPropertiesForAllTimePeriods": true,
+  "IncludeOnlyPropertiesForAllTimePeriodsMessage": "",
+  "IncludesDetailedTimePeriods": true
+},
+  "Title": "a"
+}
