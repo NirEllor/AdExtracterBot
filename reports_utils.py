@@ -369,10 +369,10 @@ def run_batch(brands_excel, start, end, headers, create_detailed_reports=False):
         print(f"   • {b}")
 
     print("\n🛠️ Step 1: Creating reports...")
-    # status = create_reports(brands_excel, start, end, headers, create_detailed_reports)
-    # if status == 2:
-    #     return None
-    # print("✅ Finished creating report specs.\n") if status else print("Not yet...")
+    status = create_reports(brands_excel, start, end, headers, create_detailed_reports)
+    if status == 2:
+        return None
+    print("✅ Finished creating report specs.\n") if status else print("Not yet...")
 
     print("🛠️ Step 2: Searching for completed reports...")
     links = get_download_links(brands_excel[start:end], headers)
