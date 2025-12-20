@@ -14,7 +14,7 @@ def extract_ads_batch():
 
 
 def main():
-    create_reports_batch(create_detailed_reports=False)  # For adExtractorBot
+    # create_reports_batch(create_detailed_reports=False)  # For adExtractorBot
     extract_ads_batch()
     # create_reports_batch(create_detailed_reports=True)  # Not working yet!
 
