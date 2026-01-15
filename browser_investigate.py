@@ -17,7 +17,7 @@ from config import USERNAME, PASSWORD
 
 COOKIES_FILE = "cookies.pkl"
 LOGIN_URL = "https://app.vivvix.com/360/"
-TOO_MUCH_TIME = 6 * 60 * 60
+TOO_MUCH_TIME = 2 * 60 * 60
 NUM_WORKERS = 1 # DO NOT CHANGE UNLESS NIR TOLD YOU
 
 load_dotenv()
@@ -168,6 +168,7 @@ def find_image_source(driver, max_retries=2):
         "img[src*='CreativeViewer.axd']",
         "img[src*='CreativeByCollectionID']",
         "img[src*='evaliant.net']",
+        "img[src*='data:image']",
 
     ]
 

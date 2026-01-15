@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from datetime import datetime
 from config import ROOT_IMPORT_PATH, ROOT_IMPORT_PATH_DETAILED_REPORTS
@@ -18,11 +19,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 FILES_REPORTS_DETAILED = r"C:\Vivix_Media_Files\Reports_Detailed"
 
+def extract_brand_name(filename: str) -> str:
+    name = filename.replace(".xlsx", "")
+    match = re.match(r"^(.*?)(?=_(?:\d|Yearly))", name)
+    return match.group(1) if match else name
 
-def to_failed_filename(s: str) -> str:
-    prefix = s.split("_", 1)[0]
-    return prefix + "_failed_to_download.xlsx"
 
+def to_failed_filename(original_filename: str) -> str:
+    brand = extract_brand_name(original_filename)
+    return f"{brand}_failed_to_download.xlsx"
 
 def create_report(brand_name: str, headers, create_detailed_reports=False):
     print("\n======================================")
@@ -78,7 +83,7 @@ def create_report(brand_name: str, headers, create_detailed_reports=False):
 
     if res is None:
         print(f"❌ No exact entity match found for '{brand_name}'. Skipping brand.")
-        return None
+        return -2
 
     print(f"✅ Found matching entity: {res['EntityName']} (EntityId={res['EntityId']})")
 
@@ -115,8 +120,8 @@ def create_report(brand_name: str, headers, create_detailed_reports=False):
     report_spec_id = save_report.text.strip()
 
     if not report_spec_id.isdigit():
-        print(f"❌ ERROR: Invalid reportSpecId returned")
-        return None
+        print(f"❌ ERROR: Invalid reportSpecId returned for brand {brand_name}: {report_spec_id}")
+        return -2
 
     print(f"✅ Extracted reportSpecId")
 
@@ -195,23 +200,22 @@ def create_reports(brands_excel, start, end, headers, create_detailed_reports=Fa
     for brand in brands_excel[start:end]:
         try:
             report_spec_idv = create_report(brand, headers, create_detailed_reports)
-            print(f"report {report_spec_idv} for brand {brand}")
-            brands_not_found.append(report_spec_idv) if not report_spec_idv else None
+            print(f"report status {report_spec_idv} for brand {brand}")
+            brands_not_found.append(brand) if report_spec_idv == -2 else None
         except Exception as e:
             print(e)
 
     # Wait until reports are completed
     print('Reports created, waiting for reports to run')
-
+    if brands_not_found:
+        df = pd.DataFrame(brands_not_found)
+        df.to_excel("brands_not_found_in_vivix.xlsx", index=False, header=False)
     finished_creating = check_reports_status(headers)
     while not finished_creating:
         print(f"finish_creating is {finished_creating}, sleeping and running again")
         time.sleep(60)
         print("running again")
         finished_creating = check_reports_status(headers)
-    if brands_not_found:
-        df = pd.DataFrame(brands_not_found)
-        df.to_excel("brands_not_found_in_vivix.xlsx", index=False, header=False)
     return finished_creating
 
 
@@ -355,7 +359,7 @@ def get_sliced_excel_with_brands_names():
         return None, None, None
 
 
-# Runs the whole process at once
+# Runs the whole process at onceto_failed_filename
 def run_batch(brands_excel, start, end, headers, create_detailed_reports=False):
     print("\n============================")
     print(f"🚀 Running batch: brands[{start}:{end}]")

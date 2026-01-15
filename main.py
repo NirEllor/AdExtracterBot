@@ -10,13 +10,14 @@ def extract_ads_batch():
         report_name = extract_report_name(dbx, brand)
         if report_name:
             failed_files_excel_name = to_failed_filename(report_name)
+            print(f" failed_files_excel_name = {failed_files_excel_name}")
             run(report_name, failed_files_excel_name, brands_list)
 
 
 def main():
+    # create_reports_batch(create_detailed_reports=True)
     # create_reports_batch(create_detailed_reports=False)  # For adExtractorBot
     extract_ads_batch()
-    # create_reports_batch(create_detailed_reports=True)  # Not working yet!
 
 
 if __name__ == '__main__':

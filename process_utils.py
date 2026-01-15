@@ -3,6 +3,7 @@ import os
 from config import ROOT_EXPORT_PATH
 from dropbox_utils import download_excel_from_dropbox, ROOT_IMPORT_PATH
 from excel_utils import apply_post_attempt_filtering, extract_external_urls
+from reports_utils import extract_brand_name
 from browser_investigate import create_driver, login_if_needed, investigate
 from browser_download import download_ads
 from config import dbx
@@ -13,7 +14,7 @@ import pandas as pd
 
 PLACE_FOR_FILES = r"C:\Vivix_Media_Files"
 SHEET_NAME = "Report"
-MAX_RUNS = 8
+MAX_RUNS = 5
 
 
 os.makedirs(PLACE_FOR_FILES, exist_ok=True)
@@ -163,7 +164,9 @@ def process_single_run(report_name, brands, filtered_excel=False):
 
 
 def run(report_name, failed_files_excel_name, brands, max_runs=MAX_RUNS):
-    attempt = 1
+    brand = extract_brand_name(report_name)
+    print(f"brand is {brand}")
+    attempt = 2 if brand == "Popeyes" else 1
     all_files_downloaded = False
 
     while not all_files_downloaded and attempt <= MAX_RUNS:
