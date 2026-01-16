@@ -166,7 +166,7 @@ def process_single_run(report_name, brands, filtered_excel=False):
 def run(report_name, failed_files_excel_name, brands, max_runs=MAX_RUNS):
     brand = extract_brand_name(report_name)
     print(f"brand is {brand}")
-    attempt = 2 if brand == "Popeyes" else 1
+    attempt = 1
     all_files_downloaded = False
 
     while not all_files_downloaded and attempt <= MAX_RUNS:
